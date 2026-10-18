@@ -1,5 +1,5 @@
-// The README's examples: each map in Mind Elixir (a Chromium screenshot of the editor, in Arial)
-// next to the SVG this package makes of it. `npm run screenshots` writes docs/images/.
+// The README's examples: the SVG this package makes of each map and, for the first, a Chromium
+// screenshot of Mind Elixir (in Arial) showing the same map. `npm run screenshots` writes docs/images/.
 import { chromium } from "@playwright/test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
@@ -39,7 +39,7 @@ const photosynthesis = {
 };
 
 const examples = {
-  "both-sides": { data: photosynthesis, direction: 2 },
+  "both-sides": { data: photosynthesis, direction: 2, editor: true },
   // Arrow control points are absolute offsets: the one above would cross this layout
   "top-down": { data: { ...photosynthesis, arrows: [] }, direction: 3 },
   dark: { data: photosynthesis, direction: 1, dark: true },
@@ -73,7 +73,7 @@ for (const [name, example] of Object.entries(examples)) {
     };
     return { svg: result.svg, clip };
   }, example);
-  await page.screenshot({ path: `${out}/${name}-editor.png`, clip });
+  if (example.editor) await page.screenshot({ path: `${out}/${name}-editor.png`, clip });
   writeFileSync(`${out}/${name}.svg`, svg);
   console.log(`${name}: ${clip.width}×${clip.height}, SVG ${svg.length} B`);
   await page.close();
