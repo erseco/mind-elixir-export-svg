@@ -1,0 +1,185 @@
+{
+  "chromium": {
+    "version": "156.0.8078.4",
+    "maps": {
+      "three": {
+        "topics": 3,
+        "x": 0.03,
+        "y": 0,
+        "width": 0.03,
+        "height": 0
+      },
+      "topDown": {
+        "topics": 7,
+        "x": 0.02,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "wide": {
+        "topics": 7,
+        "x": 0.02,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "deep": {
+        "topics": 27,
+        "x": 0.27,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "large": {
+        "topics": 311,
+        "x": 0.02,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "rich": {
+        "topics": 13,
+        "x": 4.52,
+        "y": 4,
+        "width": 4.5,
+        "height": 8
+      },
+      "features": {
+        "topics": 6,
+        "x": 6.02,
+        "y": 1.06,
+        "width": 6.02,
+        "height": 2.11
+      },
+      "unicode": {
+        "topics": 8,
+        "x": 0.03,
+        "y": 14,
+        "width": 10.47,
+        "height": 8
+      }
+    }
+  },
+  "firefox": {
+    "version": "157.0",
+    "maps": {
+      "three": {
+        "topics": 3,
+        "x": 0.06,
+        "y": 0.35,
+        "width": 0.04,
+        "height": 1.52
+      },
+      "topDown": {
+        "topics": 7,
+        "x": 0.02,
+        "y": 2.33,
+        "width": 0.01,
+        "height": 1.52
+      },
+      "wide": {
+        "topics": 7,
+        "x": 0.01,
+        "y": 15.17,
+        "width": 0.01,
+        "height": 3.03
+      },
+      "deep": {
+        "topics": 27,
+        "x": 0.06,
+        "y": 0.35,
+        "width": 0.01,
+        "height": 1.52
+      },
+      "large": {
+        "topics": 311,
+        "x": 0.07,
+        "y": 210.82,
+        "width": 0.04,
+        "height": 1.52
+      },
+      "rich": {
+        "topics": 13,
+        "x": 3.63,
+        "y": 11.82,
+        "width": 3.59,
+        "height": 6
+      },
+      "features": {
+        "topics": 6,
+        "x": 1.38,
+        "y": 2.27,
+        "width": 1.36,
+        "height": 1.52
+      },
+      "unicode": {
+        "topics": 8,
+        "x": 0,
+        "y": 14.07,
+        "width": 10.43,
+        "height": 5
+      }
+    }
+  },
+  "webkit": {
+    "version": "27.2",
+    "maps": {
+      "three": {
+        "topics": 3,
+        "x": 0.03,
+        "y": 0,
+        "width": 0.03,
+        "height": 0
+      },
+      "topDown": {
+        "topics": 7,
+        "x": 0.02,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "wide": {
+        "topics": 7,
+        "x": 0.02,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "deep": {
+        "topics": 27,
+        "x": 0.27,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "large": {
+        "topics": 311,
+        "x": 0.02,
+        "y": 0,
+        "width": 0.02,
+        "height": 0
+      },
+      "rich": {
+        "topics": 13,
+        "x": 4.73,
+        "y": 4.22,
+        "width": 4.72,
+        "height": 8
+      },
+      "features": {
+        "topics": 6,
+        "x": 3.02,
+        "y": 0.87,
+        "width": 3.02,
+        "height": 1.75
+      },
+      "unicode": {
+        "topics": 8,
+        "x": 0.03,
+        "y": 14,
+        "width": 10.47,
+        "height": 8
+      }
+    }
+  }
+}

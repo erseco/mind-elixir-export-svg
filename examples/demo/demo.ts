@@ -2,7 +2,7 @@
 // a screenshot) on the right. Built by scripts/build-harness.mjs; served by `npm run demo`.
 import MindElixir from "mind-elixir";
 import { downloadSvg, renderSvg } from "../../src/index.js";
-import { FIXTURES } from "../../tests/browser/fixtures.js";
+import { FIXTURES } from "../../tests/fixtures.js";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const fixtureSelect = $<HTMLSelectElement>("fixture");

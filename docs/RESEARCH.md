@@ -1,7 +1,12 @@
 # Research notes
 
-What was read before the exporter was written, and the requirement each finding became. State as
+What was read before the renderer was written, and the requirement each finding became. State as
 of 2026-10-18.
+
+The first version read the geometry from a live editor's DOM. It was replaced, before any release,
+by a renderer that computes the layout from the data with font metrics, as Pele does: one way to
+calculate, with no browser, so exports made on a server match those made in the editor. The
+findings below about Mind Elixir's DOM and CSS are what that layout model reproduces.
 
 ## Mind Elixir 5.15.1
 

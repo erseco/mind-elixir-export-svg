@@ -1,148 +1,101 @@
 # Architecture
 
-The exporter reads the map the browser laid out and writes what it finds as native SVG. It does
-not lay anything out itself: the browser already did, and any second layout engine would draw a
-different map.
+The renderer lays a Mind Elixir map out from its data, as Pele does for Mermaid: font metrics
+tables give text widths, a model of Mind Elixir's stylesheet gives boxes and positions, and Mind
+Elixir's own connector formulas give the lines. There is one way to calculate, with no DOM and no
+canvas, so the result is the same wherever it runs.
 
 ```
-renderSvg(mind)
-  resolveOptions                      src/options.ts      validate, defaults (pure)
-  waitForFonts                        src/browser/fonts.ts
-  extractScene                        src/browser/extract.ts
-    createFrame                       src/browser/frame.ts   screen → layout coordinates
-    walk me-nodes (iterative)         boxes, SVG layers, images, text nodes
-    measureText                       src/browser/text.ts    Range rects per word/grapheme
-    layoutLines                       src/text/lines.ts      lines, runs, baselines (pure)
-    embedImage                        src/browser/images.ts  data:/blob:/resolver → checked raster
-  renderDocument(scene)               src/svg/document.ts    scene → SVG string (pure)
+renderSvg(input)                          src/render.ts
+  resolveOptions                          src/options.ts     validation, defaults
+  readMap                                 src/data.ts        untrusted data → checked tree (iterative)
+  resolveTheme                            src/theme.ts       Mind Elixir theme variables
+  layoutMap                               src/layout.ts      topics, then the tree
+    layoutTopic                                              a topic's content and size
+    wrapText                              src/text/wrap.ts   pre-wrap line breaking
+    arialMeasurer                         src/text/measure.ts + metrics.ts (generated)
+  draw                                    src/render.ts      layout → scene
+    mainBranch, subBranch, arrowGeometry, summaryGeometry    src/connectors.ts
+    embedImage                            src/images.ts      checked raster data: URLs
+  renderDocument(scene)                   src/svg/document.ts scene → SVG string
 ```
 
-Everything outside `src/browser` is pure and unit-tested to 100% coverage; `src/browser` is
-tested in Chromium, Firefox and WebKit against real Mind Elixir maps.
+Everything is unit-tested in Node to 100% coverage. The browser tests use real Mind Elixir as the
+reference the layout is measured against.
 
-## The coordinate model
+## Text metrics
 
-Mind Elixir places every element of a map inside `me-nodes` (`mind.nodes`): topics, the main
-branch lines (`svg.lines`), the lines of each subtree (`svg.subLines`, one per `me-wrapper`),
-arrows (`svg.topiclinks`), summaries (`svg.summary`) and the labels of both
-(`div.label-container > div.svg-label`). Zoom and pan are a CSS transform on its parent,
-`.map-canvas`.
+`scripts/generate-metrics.mjs` reads Arimo (metric-compatible with Arial: same advance widths)
+from `@fontsource/arimo` and writes `src/text/metrics.ts`: advance widths of 2,357 code points
+per weight (Latin, Latin Extended, Greek, Cyrillic, Hebrew, Vietnamese), in thousandths of an em,
+the font's vertical metrics, and its kerning pairs (100 regular, 97 bold). The measurer:
 
-CSS transforms do not change layout. So the export's coordinate system is `me-nodes`' layout
-space: CSS pixels from its top-left corner, before any transform. Every element is measured with
-`getBoundingClientRect()` and mapped back:
+- segments text into graphemes (`Intl.Segmenter`);
+- adds each code point's advance, plus the kerning between consecutive ones (browsers kern by
+  default: Arial's "11" is 1.18 px narrower at 16 px, which moves everything after it);
+- uses the bold table from weight 600;
+- for what Arial lacks: an accented letter is as wide as its decomposition (NFD), combining
+  marks and format characters are zero, and emoji (1.2 em), CJK (1 em), Hangul (0.865 em),
+  Arabic (0.32 em) and anything else (0.556 em) are estimates measured from browsers' fallback
+  fonts next to Arial.
 
-```
-local = (rect.left - nodesRect.left) / scaleX,  (rect.top - nodesRect.top) / scaleY
-```
+Another font: pass `measureText` (`width(text, font)` and `vertical`).
 
-where the scale is the product of the `transform` and `scale` of `me-nodes` and its ancestors
-(rotation and skew are refused). If the drawn size of `me-nodes` disagrees with its laid-out size
-by more than 2% (CSS `zoom`, a scaled iframe), the measured ratio is used instead. Nothing in the
-editor is changed to measure it: `mind.scaleVal` is never touched.
+## The layout model
 
-SVG layers are copied with their own path data. An `svg.lines`-type element has no `viewBox`, so
-its user space is CSS pixels from its own box: its origin is measured like any element, and each
-path is written with `translate(origin) × getCTM()`. Bounds come from `getBBox()` (which includes
-curve extrema, not just end points) under the same transform, plus the stroke's reach: half its
-width, or twice it for miter joins (arrowheads), at the default miter limit.
+`src/layout.ts` reproduces Mind Elixir 5.15.1's `index.css` for its DOM
+(`me-nodes > me-main / me-root > me-wrapper > me-parent > me-tpc`, `me-children`):
 
-The result is the same at any editor zoom (to 0.025 px after rounding, tested at 0.9, 0.984375,
-1.25, 1.5, 1.75 and 2 with a pan) and at any device pixel ratio in Chromium and Firefox (within a
-pixel; WebKit's own layout changes with the ratio, see COMPATIBILITY.md).
+- **Topics** (`me-tpc`, border-box, `max-width: 35em`, `white-space: pre-wrap`). Root: 25 px,
+  padding 10/30, 2 px border; main: padding 8/25, 2 px border in the branch colour; sub: padding
+  `--topic-padding`; top-down subs: padding 6/12, 1 px border. Contents in order: the image
+  (block, `margin-bottom: 8px`), a line of inline boxes (the caption's `span.text` inline block,
+  the link 🔗 with `margin-left: 0.3em`, the icons with `margin-left: 5px` and `line-height:
+1.3em`) and the tags (12 px, padding 2/4, margins), flowed and baseline-aligned like CSS inline
+  formatting.
+- **Shrink-to-fit**: a box is as wide as its content's max-content, at most the space available;
+  a caption that wraps takes all of it.
+- **Line heights**: `line-height: normal` is the font's ascent + descent + line gap, each rounded
+  to whole pixels as Blink and WebKit do (16 px Arial: 14 + 3 + 1 = 18 px). Text widths are
+  rounded up to 1/64 px, their layout unit.
+- **The tree**: `me-parent` (main: margin 10; sub: padding 6/`--node-gap-x`, margin-top
+  `--node-gap-y`) and `me-children` are inline blocks with `vertical-align: middle` in one line
+  box with the wrapper's strut, so their midpoints sit half an x-height above its baseline. On
+  the left side (`direction: rtl`) children come first and are aligned right. Main wrappers
+  stack with `--main-gap-y` margins that collapse, in columns `--main-gap-x` wide, and the
+  columns and the root (`margin: 45px 0`) are centred by `me-nodes`' flexbox, inside
+  `--map-padding`.
+- **Top-down** (`me-nodes.down`): flex columns and rows, with the gaps swapped, as its rules say.
+- **Sides**: main nodes without a `direction` alternate, left first, as Mind Elixir assigns them;
+  the palette is applied in DOM order (left side first).
 
-## Painting order
+Positions come out in `me-nodes`' coordinates, the ones Mind Elixir's `getOffsetLT` measures,
+so the connector formulas apply unchanged. Both passes are iterative.
 
-The SVG paints five groups in Mind Elixir's stacking order: `branches` (lines, subLines), `nodes`
-(topics, tags, icons, images, the collapsed-branch icon), `summaries` (z-index 20), `arrows`
-(z-index 20) and `labels` (z-index 21). Within a group, document order.
+## Connectors
 
-Editor UI is skipped by selector (`#input-box`, drag previews, the selection area, arrow handles,
-the hover-only collapse icon), and anything not displayed (`display: none`, `visibility: hidden`,
-zero opacity) with its subtree. Selection outlines are CSS outlines, which are never exported.
-Transparent strokes, which Mind Elixir uses as 15 px hit zones around arrows, draw nothing and are
-dropped.
-
-## Boxes
-
-Each displayed HTML element with a background or a border becomes a box: the border box, the
-computed `background-color`, the border when all four sides agree (otherwise the top side, with
-a warning), and the four corner radii, clamped as CSS does. A CSS border is inside the box, so
-the stroke is inset by half its width. An opaque border is drawn by the same element as the
-background; a translucent one separately, so the background shows through it as in CSS. Uniform
-radii become `<rect rx ry>`, others a path.
-
-## Text
-
-Text is where Mind Elixir's own SVG export failed: native `<text>` does not wrap, so it put
-captions in `foreignObject`. This exporter does not wrap text either: the browser already did,
-and the exporter reads the result.
-
-1. **Segments.** Each text node is split into words with `Intl.Segmenter` (graphemes where a
-   word spans more than one rect: a word broken across lines, or bidi reordering). Each segment
-   gets its box from `Range.getClientRects()`.
-2. **Lines.** Segments are grouped into lines by vertical overlap (more than half the smaller
-   height), which is exactly how the browser broke them. Line breaks and blank space at the ends
-   of a line draw nothing and are dropped.
-3. **Runs.** A line splits into runs where the computed style (font, size, weight, style, colour,
-   decorations, letter spacing) or the direction changes. Each run is a `<tspan>` with its own
-   `x` (or a separate right-to-left `<text>`, positioned at its right edge with
-   `direction="rtl"`), so nothing depends on the viewer's text layout but the glyphs.
-4. **Baselines.** Range rects are the font's content area: `ascent + descent` tall (WebKit adds
-   a fraction, split evenly). With the primary font's `fontBoundingBoxAscent`/`Descent` from a
-   canvas, the baseline is `top + (height − ascent − descent) / 2 + ascent`. Glyphs from fallback
-   fonts (emoji, CJK) can have taller boxes, so a line's baseline is the median over its
-   primary-font segments, and only lines with none use the others (in Firefox such a line can be
-   1 px off). Measured against probes on every line of the test maps: within 0.5 px in Chromium
-   and WebKit, 1.5 px in Firefox.
-5. **Widths.** Each run carries the width it was drawn at, written as `textLength` with
-   `lengthAdjust="spacing"`. A viewer with other metrics (another font; WebKit's rounded advances
-   at 1×, where a 30-character line measured 15 px wider) then fits the run into the same space
-   instead of overflowing the node. Renderers that do not support it (svg2pdf.js) ignore it.
-
-Decorations follow CSS propagation: an element's `text-decoration-line` applies to its inline
-descendants, but not into atomic inline boxes (`inline-block`…). Mind Elixir 5.15.1 sets node
-styles on `me-tpc` while the caption is in `span.text`, an inline block, so a node style's
-underline is not drawn by the editor, and the export follows the editor.
-
-Fonts: before measuring, the exporter waits for `document.fonts.ready` (up to `fontTimeout`),
-then reports fonts `document.fonts.check()` rejects and `FontFace`s of the used families whose
-loading failed (WebKit's `check()` accepts those). Text measured before a font loads would be
-measured with a fallback, so a timeout is a warning, and an error in strict mode.
-
-## Images
-
-`<img>` elements in topics become `<image>` with the content box, `object-fit` (cover → `slice`,
-contain → `meet`, fill → `none`) and rounded corners as a `clipPath`. Sources: `data:` URLs are
-decoded; `blob:` URLs are read with `fetch` (local); everything else goes to `resolveImage`, or
-is left out. The bytes are then sniffed and re-encoded with the type they actually are: only PNG,
-JPEG, GIF, WebP and AVIF are embedded, never SVG (which could carry script). An image the editor
-failed to load is shown broken, so it is not exported unless a resolver supplies it.
+`src/connectors.ts` adapts Mind Elixir's `generateBranch.ts` (main branches: a quadratic curve
+from near the root's centre, its curvature depending on the map's height; sub-branches: a cubic
+curve from the parent's `me-parent` box; top-down: an orthogonal connector with rounded
+corners), `arrow.ts` (default control points by distance and direction, exit points on the
+topics' borders, 12 px heads at ±30°, the label at the curve's midpoint) and `summary.ts`
+(brackets over the summarized wrappers, the label beside them). Labels are boxes 16 px, line
+height 1.2, padding `--topic-padding`, anchored as `calculatePrecisePosition` does.
 
 ## The document
 
 `renderDocument` writes `<svg xmlns width height viewBox role="img" aria-labelledby>` with
-`<title>`, an optional `<desc>`, `<defs>` (clip paths only), a background rect and the five
-groups. All strings go through one escaping function (which also drops characters XML cannot
-hold and replaces lone surrogates), all numbers through one formatter (two decimals, refusing
-non-finite values), and attribute names are checked. There is no XML declaration or DOCTYPE, no
-`style`, no `class` other than the five group names, and no external reference: the only `href`
-values are checked links and embedded raster `data:` URLs. Ids are `${idPrefix}-…`, unique within
-the document.
+`<title>`, optional `<desc>`, `<defs>` (clip paths only), a background, and five groups in Mind
+Elixir's stacking order: branches, nodes, summaries, arrows, labels. Every string goes through
+one escaping function (which also drops characters XML cannot hold and replaces lone
+surrogates), every number through one formatter (two decimals, refusing non-finite values).
+Each line of text is a `<tspan>` at its computed position, with `textLength` set to its computed
+width. There is no `style`, `script`, `foreignObject`, `use` or external reference.
 
-## Portable renderer
+## What it does not do
 
-A renderer from Mind Elixir JSON alone (Node, Bun, workers) is not implemented. It would need its
-own layout and text measurement, and could not claim to match the editor, which is the point of
-this package. The pieces it would reuse are already separate: `renderDocument` turns a scene
-into SVG without the DOM, and `layoutLines` builds runs from measured segments. What it would
-add:
-
-- a `TextMeasurer` (`width(text, font)`), from a canvas where there is one, or from font metric
-  tables with a documented error (as Pele does with Arial advances);
-- a port of Mind Elixir's layout (`src/utils/layout-ssr.ts` exists upstream, which lays out
-  without the DOM) to produce boxes and branch paths;
-- its own entry point (`renderSvgFromData`), with its own warnings, documented as an
-  approximation.
-
-Until then, the intended use is to export in the browser when a map is saved and store the SVG.
+- It does not lay out custom HTML (`dangerouslySetInnerHTML`): that needs a browser.
+- It does not read a live editor's DOM. An editor with custom CSS (other fonts, paddings) is
+  reproduced only if the same values are given (`theme`, `measureText`).
+- Fallback fonts for emoji and CJK differ by system, and Firefox's line heights differ from
+  Chromium's and WebKit's: those maps are close, not exact (COMPATIBILITY.md).

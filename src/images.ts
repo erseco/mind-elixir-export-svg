@@ -1,6 +1,6 @@
-import { throwIfAborted } from "../errors.js";
-import type { ResolvedOptions } from "../options.js";
-import { decodeDataUrl, rasterDataUrl } from "../security.js";
+import { throwIfAborted } from "./errors.js";
+import type { ResolvedOptions } from "./options.js";
+import { decodeDataUrl, rasterDataUrl } from "./security.js";
 
 /**
  * Turns an image source into a raster `data:` URL to embed, without network access unless the

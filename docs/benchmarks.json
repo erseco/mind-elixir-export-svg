@@ -1,6 +1,6 @@
 {
   "env": {
-    "date": "2026-10-18T11:32:17.759Z",
+    "date": "2026-10-18T12:46:05.524Z",
     "chromium": "156.0.8078.4",
     "node": "v26.12.0",
     "runs": 7,
@@ -13,15 +13,15 @@
       "fixture": "three",
       "nodes": 3,
       "svg": {
-        "bytes": 1958,
-        "gzip": 649,
-        "ms": 0.3,
+        "bytes": 1500,
+        "gzip": 563,
+        "ms": 0.2,
         "warnings": 0,
         "topics": "3/3"
       },
       "png": {
         "bytes": 19046,
-        "ms": 7.9
+        "ms": 8
       },
       "mermaid": {
         "bytes": 84,
@@ -40,15 +40,15 @@
       "fixture": "rich",
       "nodes": 13,
       "svg": {
-        "bytes": 8029,
-        "gzip": 1638,
-        "ms": 0.9,
+        "bytes": 6023,
+        "gzip": 1501,
+        "ms": 0.4,
         "warnings": 0,
         "topics": "13/13"
       },
       "png": {
         "bytes": 94735,
-        "ms": 24.5
+        "ms": 24.4
       },
       "mermaid": {
         "bytes": 516,
@@ -67,15 +67,15 @@
       "fixture": "large",
       "nodes": 311,
       "svg": {
-        "bytes": 157440,
-        "gzip": 7985,
-        "ms": 12.2,
+        "bytes": 109911,
+        "gzip": 6569,
+        "ms": 5.8,
         "warnings": 0,
         "topics": "311/311"
       },
       "png": {
         "bytes": 1393514,
-        "ms": 355.5
+        "ms": 349.7
       },
       "mermaid": {
         "bytes": 8884,
@@ -86,7 +86,7 @@
       "legacySvg": {
         "bytes": 277062,
         "gzip": 12847,
-        "ms": 4.4,
+        "ms": 4.7,
         "foreignObject": 311
       }
     }

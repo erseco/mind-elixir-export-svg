@@ -36,38 +36,6 @@ export function inflate(box: Box, by: number): Box {
   return { x: box.x - by, y: box.y - by, width: box.width + 2 * by, height: box.height + 2 * by };
 }
 
-/** The bounding box of `box` after `matrix`. */
-export function transformBox(box: Box, [a, b, c, d, e, f]: Matrix): Box {
-  const xs: number[] = [];
-  const ys: number[] = [];
-  for (const [x, y] of [
-    [box.x, box.y],
-    [box.x + box.width, box.y],
-    [box.x, box.y + box.height],
-    [box.x + box.width, box.y + box.height],
-  ] as const) {
-    xs.push(a * x + c * y + e);
-    ys.push(b * x + d * y + f);
-  }
-  const x = Math.min(...xs);
-  const y = Math.min(...ys);
-  return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
-}
-
-/** `m1` then `m2`: the matrix that applies `m1` first. */
-export function multiply(m2: Matrix, m1: Matrix): Matrix {
-  const [a2, b2, c2, d2, e2, f2] = m2;
-  const [a1, b1, c1, d1, e1, f1] = m1;
-  return [
-    a2 * a1 + c2 * b1,
-    b2 * a1 + d2 * b1,
-    a2 * c1 + c2 * d1,
-    b2 * c1 + d2 * d1,
-    a2 * e1 + c2 * f1 + e2,
-    b2 * e1 + d2 * f1 + f2,
-  ];
-}
-
 export function isIdentity(m: Matrix): boolean {
   return m.every((v, i) => Math.abs(v - (IDENTITY[i] as number)) < 1e-9);
 }
@@ -85,61 +53,85 @@ export function transformAttribute(m: Matrix): string | undefined {
   return `matrix(${fine(a)} ${fine(b)} ${fine(c)} ${fine(d)} ${num(e)} ${num(f)})`;
 }
 
-const NUMBER = /^-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?(?:px)?$/i;
-
-function length(value: string | null): number | null {
-  if (value === null || value.trim() === "") return 0;
-  const v = value.trim();
-  return NUMBER.test(v) ? parseFloat(v) : null;
-}
-
 /**
- * Path data for an SVG geometry element (`line`, `polyline`, `polygon`, `rect`, `circle`,
- * `ellipse`) from its attributes. Returns `null` for other elements, and for lengths that are
- * not plain numbers (percentages and units depend on a viewport the export does not have).
+ * Bounds of path data: every point it passes through and every control point (a Bézier curve
+ * lies inside the hull of its control points; an arc within its radii of its end points).
+ * Grown by `extra` (half a stroke, an arrowhead's miter…).
  */
-export function geometryPath(tag: string, attr: (name: string) => string | null): string | null {
-  const n = (...names: string[]) => names.map((name) => length(attr(name)));
-  switch (tag) {
-    case "line": {
-      const [x1, y1, x2, y2] = n("x1", "y1", "x2", "y2");
-      if ([x1, y1, x2, y2].some((v) => v === null)) return null;
-      return `M${num(x1 as number)} ${num(y1 as number)}L${num(x2 as number)} ${num(y2 as number)}`;
+export function pathBounds(d: string, extra = 0): Box {
+  const tokens = d.match(/[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/g) ?? [];
+  const xs: number[] = [];
+  const ys: number[] = [];
+  let x = 0;
+  let y = 0;
+  let startX = 0;
+  let startY = 0;
+  let i = 0;
+  let command = "M";
+  const next = () => Number(tokens[i++]);
+  const add = (px: number, py: number) => {
+    xs.push(px);
+    ys.push(py);
+  };
+  while (i < tokens.length) {
+    if (/[a-zA-Z]/.test(tokens[i] as string)) command = tokens[i++] as string;
+    const rel = command === command.toLowerCase();
+    const ox = rel ? x : 0;
+    const oy = rel ? y : 0;
+    switch (command.toUpperCase()) {
+      case "M":
+      case "L":
+      case "T":
+        x = ox + next();
+        y = oy + next();
+        if (command.toUpperCase() === "M") {
+          [startX, startY] = [x, y];
+          // Further pairs after a move are lines
+          command = rel ? "l" : "L";
+        }
+        break;
+      case "H":
+        x = ox + next();
+        break;
+      case "V":
+        y = oy + next();
+        break;
+      case "C":
+        add(ox + next(), oy + next());
+        add(ox + next(), oy + next());
+        x = ox + next();
+        y = oy + next();
+        break;
+      case "S":
+      case "Q":
+        add(ox + next(), oy + next());
+        x = ox + next();
+        y = oy + next();
+        break;
+      case "A": {
+        const rx = Math.abs(next());
+        const ry = Math.abs(next());
+        i += 3;
+        add(x - rx, y - ry);
+        add(x + rx, y + ry);
+        x = ox + next();
+        y = oy + next();
+        add(x - rx, y - ry);
+        add(x + rx, y + ry);
+        break;
+      }
+      case "Z":
+        [x, y] = [startX, startY];
+        break;
+      default:
+        i++;
     }
-    case "polyline":
-    case "polygon": {
-      const values = (attr("points") ?? "")
-        .trim()
-        .split(/[\s,]+/)
-        .filter(Boolean);
-      if (values.length < 4 || values.length % 2 || values.some((v) => !NUMBER.test(v))) return null;
-      const points = [];
-      for (let i = 0; i < values.length; i += 2)
-        points.push(`${num(parseFloat(values[i] as string))} ${num(parseFloat(values[i + 1] as string))}`);
-      return `M${points.join("L")}${tag === "polygon" ? "Z" : ""}`;
-    }
-    case "rect": {
-      const [x, y, w, h, rx, ry] = n("x", "y", "width", "height", "rx", "ry");
-      if ([x, y, w, h, rx, ry].some((v) => v === null) || (w as number) <= 0 || (h as number) <= 0) return null;
-      // rx alone sets ry, and the other way round, as in SVG
-      const rxv = attr("rx") === null ? (ry as number) : (rx as number);
-      const ryv = attr("ry") === null ? (rx as number) : (ry as number);
-      const r = { x: Math.min(rxv, (w as number) / 2), y: Math.min(ryv, (h as number) / 2) };
-      return roundedRectPath({ x: x as number, y: y as number, width: w as number, height: h as number }, [r, r, r, r]);
-    }
-    case "circle":
-    case "ellipse": {
-      const [cx, cy, r, rx0, ry0] = n("cx", "cy", "r", "rx", "ry");
-      if ([cx, cy, r, rx0, ry0].some((v) => v === null)) return null;
-      const rx = tag === "circle" ? (r as number) : (rx0 as number);
-      const ry = tag === "circle" ? (r as number) : (ry0 as number);
-      if (rx <= 0 || ry <= 0) return null;
-      const [x, y] = [cx as number, cy as number];
-      return `M${num(x - rx)} ${num(y)}A${num(rx)} ${num(ry)} 0 1 0 ${num(x + rx)} ${num(y)}A${num(rx)} ${num(ry)} 0 1 0 ${num(x - rx)} ${num(y)}Z`;
-    }
-    default:
-      return null;
+    add(x, y);
   }
+  if (!xs.length) return { x: 0, y: 0, width: 0, height: 0 };
+  const minX = Math.min(...xs) - extra;
+  const minY = Math.min(...ys) - extra;
+  return { x: minX, y: minY, width: Math.max(...xs) + extra - minX, height: Math.max(...ys) + extra - minY };
 }
 
 /** True when every corner has the same radius. */
