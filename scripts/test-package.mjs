@@ -19,7 +19,14 @@ for (const file of pack.files) {
     `unexpected file ${file.path}`,
   );
 }
-for (const required of ["dist/index.js", "dist/index.d.ts", "dist/browser/exporter.js", "LICENSE", "README.md"]) {
+for (const required of [
+  "dist/index.js",
+  "dist/index.d.ts",
+  "dist/render.js",
+  "dist/text/metrics.js",
+  "LICENSE",
+  "README.md",
+]) {
   assert.ok(
     pack.files.some((f) => f.path === required),
     `missing ${required}`,
