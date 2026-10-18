@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SvgExportError, throwIfAborted } from "../../src/errors.js";
-import { DEFAULT_LIMITS, resolveOptions } from "../../src/options.js";
+import { DEFAULT_FONT_FAMILY, DEFAULT_LIMITS, resolveOptions } from "../../src/options.js";
+import { arialMeasurer } from "../../src/text/measure.js";
+import { DARK_THEME } from "../../src/theme.js";
 
 const invalid = (options: unknown) => {
   try {
@@ -21,8 +23,10 @@ describe("resolveOptions", () => {
       title: undefined,
       description: "",
       idPrefix: "mindmap-svg",
-      waitForFonts: true,
-      fontTimeout: 3000,
+      theme: undefined,
+      direction: undefined,
+      fontFamily: DEFAULT_FONT_FAMILY,
+      measure: arialMeasurer,
       links: "preserve",
       textLength: true,
       embedImages: true,
@@ -36,14 +40,17 @@ describe("resolveOptions", () => {
   it("accepts every documented option", () => {
     const controller = new AbortController();
     const resolveImage = () => null;
+    const measureText = { width: () => 1, vertical: { ascent: 1, descent: 0, lineGap: 0, xHeight: 0.5 } };
     const options = resolveOptions({
       padding: 0,
       background: "#FFF",
       title: "T",
       description: "D",
       idPrefix: "map-2",
-      waitForFonts: false,
-      fontTimeout: 0,
+      theme: DARK_THEME,
+      direction: 3,
+      fontFamily: "Inter, sans-serif",
+      measureText,
       links: "text",
       textLength: false,
       embedImages: false,
@@ -55,7 +62,10 @@ describe("resolveOptions", () => {
     expect(options).toMatchObject({
       padding: 0,
       background: { hex: "#ffffff", alpha: 1 },
-      waitForFonts: false,
+      theme: DARK_THEME,
+      direction: 3,
+      fontFamily: "Inter, sans-serif",
+      measure: measureText,
       links: "text",
       textLength: false,
       strict: true,
@@ -64,7 +74,7 @@ describe("resolveOptions", () => {
     expect(options.limits).toEqual({ ...DEFAULT_LIMITS, maxNodes: 5 });
     expect(resolveOptions({ background: "transparent" }).background).toBeNull();
     expect(resolveOptions({ background: " Theme " }).background).toBe("theme");
-    expect(resolveOptions({ background: "rgba(0,0,0,.5)" }).background).toEqual({ hex: "#000000", alpha: 0.5 });
+    expect(resolveOptions({ background: "white" }).background).toEqual({ hex: "#ffffff", alpha: 1 });
   });
 
   it("refuses invalid options", () => {
@@ -72,7 +82,6 @@ describe("resolveOptions", () => {
     expect(invalid({ padding: -1 })).toMatch(/padding/);
     expect(invalid({ padding: Number.NaN })).toMatch(/padding/);
     expect(invalid({ padding: "4" })).toMatch(/padding/);
-    expect(invalid({ fontTimeout: Infinity })).toMatch(/fontTimeout/);
     expect(invalid({ background: "url(x)" })).toMatch(/background/);
     expect(invalid({ background: 3 })).toMatch(/background/);
     expect(invalid({ title: 1 })).toMatch(/title/);
@@ -81,6 +90,21 @@ describe("resolveOptions", () => {
     expect(invalid({ links: "all" })).toMatch(/links/);
     expect(invalid({ resolveImage: "x" })).toMatch(/resolveImage/);
     expect(invalid({ signal: {} })).toMatch(/signal/);
+    expect(invalid({ direction: 4 })).toMatch(/direction/);
+    expect(invalid({ theme: { palette: "x", cssVar: {} } })).toMatch(/theme/);
+    expect(invalid({ theme: { palette: [], cssVar: null } })).toMatch(/theme/);
+    expect(invalid({ theme: null })).toMatch(/theme/);
+    expect(invalid({ fontFamily: "" })).toMatch(/fontFamily/);
+    expect(invalid({ fontFamily: "Arial; } svg { display: none" })).toMatch(/fontFamily/);
+    expect(invalid({ fontFamily: "url(x)" })).toMatch(/fontFamily/);
+    expect(invalid({ fontFamily: "a".repeat(301) })).toMatch(/fontFamily/);
+    expect(invalid({ measureText: () => 1 })).toMatch(/measureText/);
+    expect(invalid({ measureText: null })).toMatch(/measureText/);
+    expect(invalid({ measureText: { width: () => 1 } })).toMatch(/measureText/);
+    expect(invalid({ measureText: { width: () => 1, vertical: null } })).toMatch(/measureText/);
+    expect(
+      invalid({ measureText: { width: () => 1, vertical: { ascent: 1, descent: 0, lineGap: 0, xHeight: Infinity } } }),
+    ).toMatch(/measureText/);
     expect(invalid({ limits: 3 })).toMatch(/limits/);
     expect(invalid({ limits: { maxPages: 1 } })).toMatch(/Unknown limit/);
     expect(invalid({ limits: { maxNodes: 1.5 } })).toMatch(/integer/);

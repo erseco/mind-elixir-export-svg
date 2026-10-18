@@ -12,16 +12,17 @@ npx playwright install chromium firefox webkit
 
 ## Checks
 
-| Command                | What it does                                                                            |
-| ---------------------- | --------------------------------------------------------------------------------------- |
-| `npm run check`        | Formatting, types, unit tests with 100% coverage of the DOM-free code, build            |
-| `npm run test:e2e`     | Builds the browser harness and runs the browser tests in Chromium, Firefox and WebKit   |
-| `npm run test:package` | Packs the library, installs the tarball in an empty project, imports and type-checks it |
-| `npm run bench`        | Measures sizes and timings into `docs/benchmarks.json`                                  |
-| `npm run demo`         | Serves the demo (editor and export side by side) on http://127.0.0.1:5173               |
+| Command                  | What it does                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `npm run check`          | Formatting, types, unit tests with 100% coverage of the DOM-free code, build   |
+| `npm run test:e2e`       | Measures the layout against real Mind Elixir in Chromium, Firefox and WebKit   |
+| `npm run test:package`   | Packs the library, installs it in an empty project, renders from it in Node    |
+| `npm run compare-layout` | Writes the layout's deviation from Mind Elixir to `docs/layout-deviation.json` |
+| `npm run bench`          | Measures sizes and timings into `docs/benchmarks.json`                         |
+| `npm run demo`           | Serves the demo (editor and export side by side) on http://127.0.0.1:5173      |
 
-A browser test that compares with the editor should compare with the editor of the same page:
-browsers lay text out differently, and WebKit's layout also depends on the device pixel ratio.
+The layout follows Mind Elixir's stylesheet: a change to it starts with the value in Mind
+Elixir's source, and `npm run compare-layout` shows its effect in each browser.
 `VISUAL_OUT=dir npx playwright test tests/browser/visual.spec.ts` writes the screenshots and
 difference images of the visual tests.
 

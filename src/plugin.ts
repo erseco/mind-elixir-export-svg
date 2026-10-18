@@ -1,5 +1,12 @@
-import { renderSvg } from "./browser/exporter.js";
-import type { MindElixirLike, SvgExportOptions, SvgExportResult } from "./types.js";
+import { renderSvg } from "./render.js";
+import type { MindElixirData, SvgExportOptions, SvgExportResult } from "./types.js";
+
+/** What the plugin needs from a Mind Elixir instance. */
+export interface MindElixirLike {
+  getData(): MindElixirData;
+  theme?: unknown;
+  direction?: unknown;
+}
 
 /** A Mind Elixir instance with the plugin installed. */
 export type WithVectorSvgExport<T extends MindElixirLike = MindElixirLike> = T & {

@@ -1,8 +1,8 @@
 // Measures this exporter against the other ways of publishing a Mind Elixir map, on the same
 // maps, in Chromium: `npm run bench` (writes docs/benchmarks.json and prints a table).
 //
-//   svg      this package (renderSvg)
-//   png      modern-screenshot domToPng of the map (what a screenshot export produces)
+//   svg      this package (renderSvg, in Node: no browser)
+//   png      modern-screenshot domToPng of the map in Mind Elixir (a screenshot export, in Chromium)
 //   mermaid  @erseco/mind-elixir-export-mermaid source, and Pele's SVG of it
 //   legacy   Mind Elixir's deprecated mind.exportSvg()
 //
@@ -18,11 +18,22 @@ const RUNS = Number(process.env.RUNS ?? 7);
 const read = (f) => readFileSync(new URL(`../tests/browser/.harness/${f}`, import.meta.url), "utf8");
 const gz = (s) => gzipSync(Buffer.from(s), { level: 9 }).length;
 const median = (v) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)];
+async function timeNode(fn) {
+  await fn();
+  const ms = [];
+  let value;
+  for (let i = 0; i < RUNS; i++) {
+    const t = performance.now();
+    value = await fn();
+    ms.push(performance.now() - t);
+  }
+  return { value, ms: median(ms) };
+}
 
 // The fixtures are TypeScript; esbuild turns them into a module we can import
 const { build } = await import("esbuild");
 const out = await build({
-  entryPoints: ["tests/browser/fixtures.ts"],
+  entryPoints: ["tests/fixtures.ts"],
   bundle: true,
   format: "esm",
   write: false,
@@ -30,6 +41,10 @@ const out = await build({
 });
 const { FIXTURES, visibleTopics } = await import(
   `data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString("base64")}`
+);
+const lib = await build({ entryPoints: ["src/index.ts"], bundle: true, format: "esm", write: false, platform: "node" });
+const { renderSvg } = await import(
+  `data:text/javascript;base64,${Buffer.from(lib.outputFiles[0].text).toString("base64")}`
 );
 
 const browser = await chromium.launch();
@@ -43,7 +58,7 @@ for (const name of ["three", "rich", "large"]) {
   await page.addScriptTag({ content: read("bench-harness.js") });
   const measured = await page.evaluate(
     async ({ fixture, RUNS }) => {
-      const { MindElixir, renderSvg } = window.harness;
+      const { MindElixir } = window.harness;
       const mind = new MindElixir({ el: "#map", direction: fixture.direction ?? 2 });
       mind.init(structuredClone(fixture.data));
       const time = async (fn) => {
@@ -58,13 +73,11 @@ for (const name of ["three", "rich", "large"]) {
         ms.sort((a, b) => a - b);
         return { value, ms: ms[Math.floor(ms.length / 2)] };
       };
-      const svg = await time(() => renderSvg(mind));
       const png = await time(() => window.bench.domToPng(mind.nodes, { backgroundColor: "#ffffff", scale: 1 }));
       const legacy = await time(async () => await mind.exportSvg().text());
       const pngBytes = atob(png.value.split(",")[1]).length;
       return {
         nodes: mind.nodes.querySelectorAll("me-tpc").length,
-        svg: { text: svg.value.svg, ms: svg.ms, warnings: svg.value.warnings.length },
         png: { bytes: pngBytes, ms: png.ms },
         legacy: { text: legacy.value, ms: legacy.ms },
         data: mind.getData(),
@@ -73,6 +86,8 @@ for (const name of ["three", "rich", "large"]) {
     { fixture, RUNS },
   );
   await page.close();
+  const svgRun = await timeNode(() => renderSvg({ ...fixture.data, direction: fixture.direction ?? 2 }));
+  measured.svg = { text: svgRun.value.svg, ms: svgRun.ms, warnings: svgRun.value.warnings.length };
   const mermaid = mindElixirToMermaid(measured.data, { markdown: true, omitCollapsed: true });
   const peleSvg = pele(mermaid).svg;
   const text = measured.svg.text.replace(/<[^>]+>/g, "");

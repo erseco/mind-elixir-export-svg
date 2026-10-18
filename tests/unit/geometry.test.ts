@@ -1,17 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   IDENTITY,
-  geometryPath,
   inflate,
+  pathBounds,
   isFiniteBox,
   isIdentity,
-  multiply,
   roundedRectPath,
   transformAttribute,
-  transformBox,
   uniformRadii,
   union,
-  type Matrix,
 } from "../../src/geometry.js";
 
 const r = (x: number, y = x) => ({ x, y });
@@ -33,28 +30,13 @@ describe("boxes", () => {
     expect(isFiniteBox({ x: Number.NaN, y: 0, width: 1, height: 1 })).toBe(false);
     expect(isFiniteBox({ x: 0, y: 0, width: -1, height: 1 })).toBe(false);
   });
-
-  it("transforms boxes by scale, translation and rotation", () => {
-    expect(transformBox({ x: 1, y: 2, width: 3, height: 4 }, [2, 0, 0, 3, 10, 20])).toEqual({
-      x: 12,
-      y: 26,
-      width: 6,
-      height: 12,
-    });
-    const rotated = transformBox({ x: 0, y: 0, width: 2, height: 1 }, [0, 1, -1, 0, 0, 0]);
-    expect(rotated.x).toBeCloseTo(-1);
-    expect(rotated.width).toBeCloseTo(1);
-    expect(rotated.height).toBeCloseTo(2);
-  });
 });
 
 describe("matrices", () => {
-  it("composes so the right-hand matrix applies first", () => {
-    const scale: Matrix = [2, 0, 0, 2, 0, 0];
-    const move: Matrix = [1, 0, 0, 1, 5, 7];
-    expect(multiply(move, scale)).toEqual([2, 0, 0, 2, 5, 7]);
-    expect(multiply(scale, move)).toEqual([2, 0, 0, 2, 10, 14]);
-    expect(isIdentity(multiply(IDENTITY, IDENTITY))).toBe(true);
+  it("detects the identity", () => {
+    expect(isIdentity(IDENTITY)).toBe(true);
+    expect(isIdentity([1, 0, 0, 1, 0, 1e-12])).toBe(true);
+    expect(isIdentity([2, 0, 0, 1, 0, 0])).toBe(false);
   });
 
   it("writes the shortest transform attribute", () => {
@@ -78,35 +60,34 @@ describe("rounded rectangles", () => {
   });
 });
 
-describe("geometryPath", () => {
-  const attrs = (values: Record<string, string>) => (name: string) => values[name] ?? null;
-
-  it("converts each geometry element", () => {
-    expect(geometryPath("line", attrs({ x1: "0", y1: "1", x2: "10px", y2: "2.5" }))).toBe("M0 1L10 2.5");
-    expect(geometryPath("polyline", attrs({ points: "0,0 10,0 10 10" }))).toBe("M0 0L10 0L10 10");
-    expect(geometryPath("polygon", attrs({ points: "0 0, 5 5" }))).toBe("M0 0L5 5Z");
-    expect(geometryPath("rect", attrs({ width: "10", height: "6", rx: "2" }))).toBe(
-      "M2 0H8A2 2 0 0 1 10 2V4A2 2 0 0 1 8 6H2A2 2 0 0 1 0 4V2A2 2 0 0 1 2 0Z",
-    );
-    expect(geometryPath("rect", attrs({ x: "1", y: "1", width: "4", height: "4", ry: "9" }))).toContain("A2 2");
-    expect(geometryPath("rect", attrs({ width: "4", height: "4" }))).toBe("M0 0H4L4 0V4L4 4H0L0 4V0L0 0Z");
-    expect(geometryPath("circle", attrs({ cx: "5", cy: "5", r: "5" }))).toBe("M0 5A5 5 0 1 0 10 5A5 5 0 1 0 0 5Z");
-    expect(geometryPath("ellipse", attrs({ cx: "0", cy: "0", rx: "2", ry: "1" }))).toBe(
-      "M-2 0A2 1 0 1 0 2 0A2 1 0 1 0 -2 0Z",
-    );
+describe("pathBounds", () => {
+  it("covers end points and control points of absolute commands", () => {
+    expect(pathBounds("M 10 20 L 30 5 H 50 V 40 Z")).toEqual({ x: 10, y: 5, width: 40, height: 35 });
+    expect(pathBounds("M0 0 C 0 -10 100 -10 100 0 Q 120 30 90 40 S 0 0 5 5 T 1 1")).toEqual({
+      x: 0,
+      y: -10,
+      width: 120,
+      height: 50,
+    });
   });
 
-  it("refuses units, percentages, degenerate shapes and other elements", () => {
-    expect(geometryPath("line", attrs({ x1: "10%" }))).toBeNull();
-    expect(geometryPath("polyline", attrs({ points: "0 0 1" }))).toBeNull();
-    expect(geometryPath("polyline", attrs({ points: "0 0 1 x" }))).toBeNull();
-    expect(geometryPath("polyline", attrs({}))).toBeNull();
-    expect(geometryPath("rect", attrs({ width: "0", height: "4" }))).toBeNull();
-    expect(geometryPath("rect", attrs({ width: "4", height: "0" }))).toBeNull();
-    expect(geometryPath("rect", attrs({ width: "4em", height: "4" }))).toBeNull();
-    expect(geometryPath("circle", attrs({ cx: "0", cy: "0", r: "0" }))).toBeNull();
-    expect(geometryPath("circle", attrs({ cx: "0", cy: "0", r: "1in" }))).toBeNull();
-    expect(geometryPath("ellipse", attrs({ rx: "2", ry: "0" }))).toBeNull();
-    expect(geometryPath("text", attrs({}))).toBeNull();
+  it("follows relative commands and implicit lines after a move", () => {
+    // The brackets Mind Elixir draws for summaries are relative
+    expect(pathBounds("M 954 230 c 5 0 10 5 10 10 L 964 272 c 0 5 -5 10 -10 10 M 964 256 h 10")).toEqual({
+      x: 954,
+      y: 230,
+      width: 20,
+      height: 52,
+    });
+    // (10,10) → (15,15) → (15,-5) → (16,-4) → back to (10,10) → (12,12)
+    expect(pathBounds("m 10 10 5 5 v -20 l 1 1 z t 2 2")).toEqual({ x: 10, y: -5, width: 6, height: 20 });
+    expect(pathBounds("M 0 0 s 10 10 20 0 q 5 -5 10 0")).toEqual({ x: 0, y: -5, width: 30, height: 15 });
+  });
+
+  it("includes the radii of arcs, grows by a margin and skips what it does not know", () => {
+    expect(pathBounds("M 10 10 A 5 5 0 0 1 20 10", 1)).toEqual({ x: 4, y: 4, width: 22, height: 12 });
+    expect(pathBounds("M 0 0 a 2 3 0 1 0 4 0")).toEqual({ x: -2, y: -3, width: 8, height: 6 });
+    expect(pathBounds("M 0 0 X 5 L 1 1")).toEqual({ x: 0, y: 0, width: 1, height: 1 });
+    expect(pathBounds("")).toEqual({ x: 0, y: 0, width: 0, height: 0 });
   });
 });

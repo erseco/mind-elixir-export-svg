@@ -1,9 +1,14 @@
 import { parseColor, type Color } from "./css.js";
 import { SvgExportError } from "./errors.js";
+import { arialMeasurer, type TextMeasurer } from "./text/measure.js";
+import type { Theme } from "./theme.js";
 import type { ImageResolver, SvgExportLimits, SvgExportOptions } from "./types.js";
+
+export const DEFAULT_FONT_FAMILY = "Arial, Helvetica, 'Liberation Sans', Arimo, sans-serif";
 
 export const DEFAULT_LIMITS: Readonly<SvgExportLimits> = Object.freeze({
   maxNodes: 10_000,
+  maxDepth: 1_000,
   maxTextLength: 1_000_000,
   maxImages: 200,
   maxImageBytes: 5 * 1024 * 1024,
@@ -17,8 +22,10 @@ export interface ResolvedOptions {
   title: string | undefined;
   description: string;
   idPrefix: string;
-  waitForFonts: boolean;
-  fontTimeout: number;
+  theme: Theme | undefined;
+  direction: 0 | 1 | 2 | 3 | undefined;
+  fontFamily: string;
+  measure: TextMeasurer;
   links: "preserve" | "text";
   textLength: boolean;
   embedImages: boolean;
@@ -73,6 +80,37 @@ export function resolveOptions(options: SvgExportOptions = {}): ResolvedOptions 
   }
   if (options.signal !== undefined && !(options.signal instanceof AbortSignal))
     invalid("signal must be an AbortSignal");
+  if (options.direction !== undefined && ![0, 1, 2, 3].includes(options.direction)) {
+    invalid("direction must be 0, 1, 2 or 3");
+  }
+  const theme = options.theme;
+  if (
+    theme !== undefined &&
+    (typeof theme !== "object" ||
+      theme === null ||
+      !Array.isArray(theme.palette) ||
+      typeof theme.cssVar !== "object" ||
+      theme.cssVar === null)
+  ) {
+    invalid("theme must be a Mind Elixir theme ({ palette, cssVar })");
+  }
+  const fontFamily = text("fontFamily", options.fontFamily) ?? DEFAULT_FONT_FAMILY;
+  // Written into an attribute (escaped): refuse what is not a plain font list
+  if (!fontFamily.trim() || fontFamily.length > 300 || /[<>;{}\\()]/.test(fontFamily)) {
+    invalid("fontFamily must be a CSS font family list");
+  }
+  const measure = options.measureText === undefined ? arialMeasurer : options.measureText;
+  const vertical = (measure as Partial<TextMeasurer> | null)?.vertical;
+  if (
+    typeof measure !== "object" ||
+    measure === null ||
+    typeof measure.width !== "function" ||
+    typeof vertical !== "object" ||
+    vertical === null ||
+    !(["ascent", "descent", "lineGap", "xHeight"] as const).every((k) => Number.isFinite(vertical[k]))
+  ) {
+    invalid("measureText must have width(text, font) and finite vertical metrics");
+  }
 
   const limits = { ...DEFAULT_LIMITS };
   if (options.limits !== undefined) {
@@ -89,8 +127,10 @@ export function resolveOptions(options: SvgExportOptions = {}): ResolvedOptions 
     title: text("title", options.title),
     description: text("description", options.description) ?? "",
     idPrefix,
-    waitForFonts: options.waitForFonts !== false,
-    fontTimeout: nonNegative("fontTimeout", options.fontTimeout, 3000),
+    theme: options.theme,
+    direction: options.direction,
+    fontFamily,
+    measure,
     links: options.links ?? "preserve",
     textLength: options.textLength !== false,
     embedImages: options.embedImages !== false,

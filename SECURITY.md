@@ -14,9 +14,10 @@ Please report vulnerabilities privately through
 
 ## Threat model
 
-The exporter reads a live Mind Elixir map and writes an SVG document. Map data is hostile: maps
-are often written by other people and imported (captions, styles, links, images, custom HTML).
-The SVG is then shown to other people, inline in pages, in `<img>`, in packages and PDFs.
+The renderer reads Mind Elixir data and writes an SVG document. Map data is hostile: maps are
+often written by other people and imported (captions, styles, links, images, custom HTML), and
+may be rendered on a server. The SVG is then shown to other people, inline in pages, in `<img>`,
+in packages and PDFs.
 
 | Threat                                                                                  | Mitigation                                                                                                                                                                                                                                                                                                                                       |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -42,7 +43,7 @@ The SVG is then shown to other people, inline in pages, in `<img>`, in packages 
 
 ## Supply chain
 
-- No runtime dependencies; `mind-elixir` is a peer dependency. Development dependencies are
-  pinned and updated through Dependabot.
+- No runtime dependencies. Development dependencies are pinned and updated through Dependabot.
+  The font metrics are generated from a pinned font package (`scripts/generate-metrics.mjs`).
 - Releases are published from GitHub Actions with npm Trusted Publishing and provenance, after
   the same checks as CI, from the tarball the package test installed.

@@ -27,11 +27,17 @@ describe("parseColor", () => {
     expect(parseColor("transparent")).toEqual({ hex: "#000000", alpha: 0 });
   });
 
+  it("reads the CSS named colours", () => {
+    expect(parseColor("red")).toEqual({ hex: "#ff0000", alpha: 1 });
+    expect(parseColor(" RebeccaPurple ")).toEqual({ hex: "#663399", alpha: 1 });
+  });
+
   it("refuses what it does not understand", () => {
     for (const v of [
       "oklch(70% 0.1 200)",
       "color(srgb 1 0 0)",
-      "red",
+      "currentcolor",
+      "notacolour",
       "rgb(1, 2)",
       "rgb(1, 2, 3, 4, 5)",
       "rgb(a, b, c)",

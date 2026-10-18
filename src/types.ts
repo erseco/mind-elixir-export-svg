@@ -1,20 +1,25 @@
-/**
- * The parts of a Mind Elixir instance the exporter reads. Structural, so the package does not
- * import Mind Elixir (or its types) at runtime; any initialized `MindElixirInstance` matches.
- */
-export interface MindElixirLike {
-  /** `me-nodes`: the untransformed layout surface every map element is placed in. */
-  nodes: HTMLElement;
-  /** `.map-container`: its background is the theme background. */
-  container?: HTMLElement | undefined;
+import type { TextMeasurer } from "./text/measure.js";
+import type { Theme } from "./theme.js";
+
+/** Mind Elixir data, as `mind.getData()` returns it (only what the renderer reads). */
+export interface MindElixirData {
+  nodeData: object;
+  arrows?: readonly object[] | undefined;
+  summaries?: readonly object[] | undefined;
+  direction?: number | undefined;
+  theme?: Theme | undefined;
 }
+
+/** What `renderSvg` accepts: Mind Elixir data, or an instance (its `getData()`, theme and direction). */
+export type MindElixirInput = MindElixirData | { getData(): MindElixirData; theme?: unknown; direction?: unknown };
 
 /** A resolved image: a `Blob`, or a `data:` URL string. */
 export type ResolvedImage = Blob | string;
 
 /**
- * Supplies the bytes of an image the exporter would not fetch on its own (anything other than
- * `data:` and `blob:` URLs). Return `null` to leave the image out, with a warning.
+ * Supplies the bytes of an image the renderer does not read on its own (anything other than a
+ * `data:` URL, or a `blob:` URL in a browser). Return `null` to leave the image out, with a
+ * warning.
  */
 export type ImageResolver = (
   url: string,
@@ -22,9 +27,11 @@ export type ImageResolver = (
 ) => Promise<ResolvedImage | null> | ResolvedImage | null;
 
 export interface SvgExportLimits {
-  /** Topics (`me-tpc`) in the map. Default 10,000. */
+  /** Nodes in the map. Default 10,000. */
   maxNodes: number;
-  /** Characters of text in the whole map. Default 1,000,000. */
+  /** Levels below the root. Default 1,000. */
+  maxDepth: number;
+  /** Characters of topic text in the whole map. Default 1,000,000. */
   maxTextLength: number;
   /** Embedded images. Default 200. */
   maxImages: number;
@@ -38,34 +45,41 @@ export interface SvgExportOptions {
   /** Space around the map, in px. Default 24. */
   padding?: number;
   /**
-   * `"theme"` (default): the map container's background colour. `"transparent"`: none. Or a
-   * colour: `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()` or `rgba()`.
+   * `"theme"` (default): the theme's background (`--bgcolor`). `"transparent"`: none. Or a
+   * colour: `#hex`, `rgb()`, `rgba()` or a CSS colour name.
    */
   background?: string;
-  /** Accessible name of the SVG (`<title>`). Default: the root topic's text. */
+  /** Accessible name of the SVG (`<title>`). Default: the root topic. */
   title?: string;
   /** Accessible description (`<desc>`). */
   description?: string;
   /** Prefix of the ids the SVG defines, unique per document. Default `"mindmap-svg"`. */
   idPrefix?: string;
-  /** Wait for web fonts before measuring text. Default true. */
-  waitForFonts?: boolean;
-  /** How long to wait for fonts, in ms. Default 3,000. */
-  fontTimeout?: number;
+  /** Mind Elixir theme. Default: the data's or instance's theme, else Mind Elixir's light theme. */
+  theme?: Theme;
+  /** 0 left, 1 right, 2 both sides, 3 top-down. Default: the data's or instance's, else 2. */
+  direction?: 0 | 1 | 2 | 3;
   /**
-   * Write each run of text's measured width as `textLength` (default true), so a viewer whose
-   * font metrics differ (another font, WebKit's rounded advances at 1×) adjusts the spacing to
-   * fit the same width instead of overflowing the node. Renderers without `textLength` support,
-   * such as svg2pdf.js, ignore it.
+   * The font family written into the SVG. Default `Arial, Helvetica, 'Liberation Sans', Arimo,
+   * sans-serif`, the font the default measurer has metrics for. Pass `measureText` with it to
+   * lay out for another font.
+   */
+  fontFamily?: string;
+  /** Measures text for the layout. Default: Arial's advances (no canvas, no DOM). */
+  measureText?: TextMeasurer;
+  /**
+   * Write each line's computed width as `textLength` (default true), so a viewer whose font
+   * differs adjusts the spacing to fit the same width instead of overflowing the node.
+   * Renderers without `textLength` support, such as svg2pdf.js, ignore it.
    */
   textLength?: boolean;
-  /** `"preserve"` (default): node links become SVG links (http, https and mailto only). `"text"`: only their text. */
+  /** `"preserve"` (default): node links become SVG links (http, https and mailto only). `"text"`: only the 🔗. */
   links?: "preserve" | "text";
   /** Embed images (default true). When false, images are left out with a warning. */
   embedImages?: boolean;
-  /** Resolves images that are not `data:` or `blob:` URLs. Without it they are left out. */
+  /** Resolves images that are not `data:` (or, in a browser, `blob:`) URLs. Without it they are left out. */
   resolveImage?: ImageResolver;
-  /** Throw instead of warning when something cannot be exported faithfully. Default false. */
+  /** Throw instead of warning when something cannot be rendered faithfully. Default false. */
   strict?: boolean;
   /** Cancels the export. */
   signal?: AbortSignal;
@@ -73,13 +87,7 @@ export interface SvgExportOptions {
   limits?: { [K in keyof SvgExportLimits]?: number | undefined };
 }
 
-export type SvgExportWarningCode =
-  | "FONT_UNAVAILABLE"
-  | "IMAGE_NOT_EMBEDDED"
-  | "UNSUPPORTED_HTML"
-  | "UNSUPPORTED_STYLE"
-  | "UNSAFE_LINK"
-  | "INVALID_GEOMETRY";
+export type SvgExportWarningCode = "IMAGE_NOT_EMBEDDED" | "UNSUPPORTED_HTML" | "UNSUPPORTED_STYLE" | "UNSAFE_LINK";
 
 export interface SvgExportWarning {
   code: SvgExportWarningCode;

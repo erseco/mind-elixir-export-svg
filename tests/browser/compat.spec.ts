@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 import { Resvg } from "@resvg/resvg-js";
 import { readFileSync } from "node:fs";
 import { PNG } from "pngjs";
-import { exportMap, openMap } from "./support.js";
+import { openMap, renderInNode } from "./support.js";
 
 /**
- * The SVG outside the browser that made it: resvg (an independent renderer, as used by many
- * server-side tools) and svg2pdf.js (vector PDF). Each runs once, on Chromium's export.
+ * The SVG in other renderers: resvg (an independent renderer, as used by many server-side tools)
+ * and svg2pdf.js (vector PDF). Each runs once, in Chromium's project.
  */
 
 const PDF_HARNESS = readFileSync(new URL("./.harness/pdf-harness.js", import.meta.url), "utf8");
@@ -14,8 +14,8 @@ const PDF_HARNESS = readFileSync(new URL("./.harness/pdf-harness.js", import.met
 for (const fixture of ["three", "rich", "features", "unicode"] as const) {
   test(`${fixture}: resvg renders it at its own size`, async ({ page, browserName }) => {
     test.skip(browserName !== "chromium", "renderer-independent: once is enough");
-    await openMap(page, fixture);
-    const result = await exportMap(page);
+    void page;
+    const result = await renderInNode(fixture);
     const png = PNG.sync.read(new Resvg(result.svg, { font: { loadSystemFonts: true } }).render().asPng());
     // resvg rounds a fractional size to whole pixels
     expect(Math.abs(png.width - result.width)).toBeLessThanOrEqual(1);
@@ -33,7 +33,7 @@ for (const fixture of ["three", "rich", "features", "unicode"] as const) {
 test("svg2pdf.js converts it to a vector PDF with text and paths", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "renderer-independent: once is enough");
   await openMap(page, "features");
-  const result = await exportMap(page);
+  const result = await renderInNode("features");
   await page.addScriptTag({ content: PDF_HARNESS });
   const pdf = await page.evaluate(async ({ svg, width, height }) => {
     const { jsPDF } = (window as any).pdf;

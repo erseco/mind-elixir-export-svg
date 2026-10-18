@@ -2,11 +2,12 @@
 
 ## Unreleased
 
-- First version: `renderSvg`, `exportSvg` and `downloadSvg` export an initialized Mind Elixir map
-  (5.15.1 or later 5.x) as standalone SVG with native text and vector shapes, from the editor's
-  own layout: topics, branches, tags, icons, links, images, the collapsed-branch indicator,
-  arrows and summaries with their labels, and the theme background. `createSvgExportPlugin()`
-  adds `mind.exportVectorSvg()`.
-- Options for padding, background, accessible title and description, ids, fonts, `textLength`,
-  links, images (with a resolver), strict mode, cancellation and resource limits; typed errors
-  and warnings.
+- First version: `renderSvg`, `exportSvg` and `downloadSvg` render Mind Elixir data (or an
+  instance) as standalone SVG with native text and vector shapes, laid out as Mind Elixir 5.15.1
+  lays maps out, from the data and Arial's metrics alone: no browser or DOM. Topics, branches,
+  tags, icons, links, images, the folded-branch icon, arrows and summaries with their labels,
+  themes, and left, right, both-sides and top-down layouts. `createSvgExportPlugin()` adds
+  `mind.exportVectorSvg()`.
+- Options for padding, background, accessible title and description, ids, theme, direction,
+  font family and measurer, `textLength`, links, images (with a resolver), strict mode,
+  cancellation and resource limits; typed errors and warnings.

@@ -16,5 +16,5 @@
     "declaration": true,
     "types": ["node"]
   },
-  "include": ["src", "tests", "examples", "vitest.config.ts", "playwright.config.ts"]
+  "include": ["src", "tests", "examples", "scripts", "vitest.config.ts", "playwright.config.ts"]
 }

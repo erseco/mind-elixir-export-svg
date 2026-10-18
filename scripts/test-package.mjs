@@ -19,7 +19,14 @@ for (const file of pack.files) {
     `unexpected file ${file.path}`,
   );
 }
-for (const required of ["dist/index.js", "dist/index.d.ts", "dist/browser/exporter.js", "LICENSE", "README.md"]) {
+for (const required of [
+  "dist/index.js",
+  "dist/index.d.ts",
+  "dist/render.js",
+  "dist/text/metrics.js",
+  "LICENSE",
+  "README.md",
+]) {
   assert.ok(
     pack.files.some((f) => f.path === required),
     `missing ${required}`,
@@ -44,24 +51,26 @@ try {
     "The package must have no runtime dependencies",
   );
 
-  // Node has no DOM: importing must work, and exporting must fail with a typed error
+  // Node has no DOM, and needs none: a map renders from its data alone
   const check = `
     import * as lib from "@erseco/mind-elixir-export-svg";
-    const names = ["renderSvg", "exportSvg", "downloadSvg", "createSvgExportPlugin", "SvgExportError", "DEFAULT_LIMITS"];
+    const names = ["renderSvg", "exportSvg", "downloadSvg", "createSvgExportPlugin", "SvgExportError", "DEFAULT_LIMITS", "THEME", "DARK_THEME", "arialMeasurer"];
     for (const n of names) if (!(n in lib)) { console.error("missing export", n); process.exit(1); }
     if (typeof document !== "undefined") process.exit(2);
-    const error = await lib.renderSvg({}).catch((e) => e);
-    if (!(error instanceof lib.SvgExportError) || error.code !== "NOT_INITIALIZED") { console.error(error); process.exit(3); }
-    const invalid = await lib.renderSvg({}, { padding: -1 }).catch((e) => e.code);
-    if (invalid !== "INVALID_OPTIONS") process.exit(4);
+    const { svg, width, warnings } = await lib.renderSvg({ nodeData: { id: "r", topic: "Raíz & <b>", children: [{ id: "a", topic: "Idea" }] } });
+    if (!svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"') || !svg.includes("Raíz &amp; &lt;b&gt;") || !(width > 0) || warnings.length) { console.error(svg); process.exit(3); }
+    const invalid = await lib.renderSvg({}).catch((e) => e instanceof lib.SvgExportError && e.code);
+    if (invalid !== "INVALID_DATA") process.exit(4);
   `;
   execFileSync(process.execPath, ["--input-type=module", "-e", check], { cwd: temporary, stdio: "inherit" });
 
   // The declarations type-check in a strict consumer, without Mind Elixir's types
   writeFileSync(
     join(temporary, "consumer.ts"),
-    `import { renderSvg, createSvgExportPlugin, type SvgExportOptions, type SvgExportResult, type WithVectorSvgExport, type MindElixirLike } from "@erseco/mind-elixir-export-svg";
+    `import { renderSvg, createSvgExportPlugin, DARK_THEME, type SvgExportOptions, type SvgExportResult, type WithVectorSvgExport, type MindElixirLike, type TextMeasurer } from "@erseco/mind-elixir-export-svg";
 declare const mind: MindElixirLike & { install(plugin: (m: MindElixirLike) => void): void };
+const measureText: TextMeasurer = { width: (text, font) => text.length * font.size * 0.6, vertical: { ascent: 0.8, descent: 0.2, lineGap: 0, xHeight: 0.5 } };
+void renderSvg({ nodeData: { topic: "x" } }, { theme: DARK_THEME, direction: 3, measureText, fontFamily: "monospace" });
 const options: SvgExportOptions = { padding: 8, background: "transparent", links: "text", limits: { maxNodes: 5 } };
 const result: Promise<SvgExportResult> = renderSvg(mind, options);
 mind.install(createSvgExportPlugin({ padding: 0 }));

@@ -1,7 +1,6 @@
 import type { SvgExportWarningCode } from "./types.js";
 
-export type SvgExportErrorCode =
-  "NOT_INITIALIZED" | "INVALID_OPTIONS" | "INVALID_GEOMETRY" | "LIMIT_EXCEEDED" | "ABORTED";
+export type SvgExportErrorCode = "INVALID_DATA" | "INVALID_OPTIONS" | "INVALID_GEOMETRY" | "LIMIT_EXCEEDED" | "ABORTED";
 
 /** Thrown when an export cannot produce a faithful, valid SVG. */
 export class SvgExportError extends Error {
