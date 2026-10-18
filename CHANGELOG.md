@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — 2026-10-18
+
+- `toDataUrl(svg)`: the SVG as a base64 `data:` URL, for an `<img src>`.
+- The README shows example maps next to the editor and gives sizes in bytes and in kB/MB; the
+  eXeLearning guide describes the integration as it is.
+
 ## 0.1.0 — 2026-10-18
 
 - First version: `renderSvg`, `exportSvg` and `downloadSvg` render Mind Elixir data (or an

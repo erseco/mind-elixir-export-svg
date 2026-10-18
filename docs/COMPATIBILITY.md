@@ -87,10 +87,10 @@ modern-screenshot from the editor in Chromium; the Mermaid source from
 @erseco/mind-elixir-export-mermaid and Pele's SVG of it; Mind Elixir's deprecated
 `exportSvg()`. Median of 7.
 
-| Map                 | SVG       | gzip    | Render | PNG         | Render   | Mermaid | Pele SVG  | `exportSvg()`                  |
-| ------------------- | --------- | ------- | ------ | ----------- | -------- | ------- | --------- | ------------------------------ |
-| three (3 nodes)     | 1,500 B   | 563 B   | 0.2 ms | 19,046 B    | 8.0 ms   | 84 B    | 2,002 B   | 3,178 B, 3 `foreignObject`     |
-| rich (16, 13 shown) | 6,023 B   | 1,501 B | 0.4 ms | 94,735 B    | 24.4 ms  | 516 B   | 6,826 B   | 12,292 B, 13 `foreignObject`   |
-| large (311)         | 109,911 B | 6,569 B | 5.8 ms | 1,393,514 B | 349.7 ms | 8,884 B | 128,543 B | 277,062 B, 311 `foreignObject` |
+| Map                 | SVG                | gzip             | Render | PNG                   | Render   | Mermaid          | Pele SVG           | `exportSvg()`                           |
+| ------------------- | ------------------ | ---------------- | ------ | --------------------- | -------- | ---------------- | ------------------ | --------------------------------------- |
+| three (3 nodes)     | 1,500 B (1.5 kB)   | 563 B            | 0.2 ms | 19,046 B (19 kB)      | 8.0 ms   | 84 B             | 2,002 B (2.0 kB)   | 3,178 B (3.2 kB), 3 `foreignObject`     |
+| rich (16, 13 shown) | 6,023 B (6.0 kB)   | 1,501 B (1.5 kB) | 0.4 ms | 94,735 B (95 kB)      | 24.4 ms  | 516 B            | 6,826 B (6.8 kB)   | 12,292 B (12 kB), 13 `foreignObject`    |
+| large (311)         | 109,911 B (110 kB) | 6,569 B (6.6 kB) | 5.8 ms | 1,393,514 B (1.39 MB) | 349.7 ms | 8,884 B (8.9 kB) | 128,543 B (129 kB) | 277,062 B (277 kB), 311 `foreignObject` |
 
 Mermaid keeps only the hierarchy and text; images in a map dominate any format's size.
