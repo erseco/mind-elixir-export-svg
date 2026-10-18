@@ -23,6 +23,25 @@ const { svg, width, height, warnings } = await renderSvg(mind.getData());
 - **Safe with hostile maps.** Data is validated, captions are escaped text, links and images are
   allow-listed, sizes are limited, and problems are typed errors or warnings.
 
+## Examples
+
+The same map in Mind Elixir and as the SVG this package makes from its data
+(`npm run screenshots` regenerates them):
+
+| Mind Elixir 5.15.1 (Chromium screenshot)                    | `renderSvg(mind)`                             |
+| ----------------------------------------------------------- | --------------------------------------------- |
+| ![The map in the editor](docs/images/both-sides-editor.png) | ![The map as SVG](docs/images/both-sides.svg) |
+
+Styles, tags, a summary and an arrow with its label, both sides. More SVGs, as GitHub draws them:
+
+**Top-down** (`direction: 3`)
+
+![A top-down map as SVG](docs/images/top-down.svg)
+
+**Dark theme**, one side (`theme: DARK_THEME`, `direction: 1`)
+
+<img src="docs/images/dark.svg" width="560" alt="A dark map as SVG">
+
 ## Why not the alternatives
 
 |                                 | PNG screenshot  | Mermaid + Pele  | This package |

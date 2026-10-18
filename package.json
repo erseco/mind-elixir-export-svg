@@ -57,7 +57,8 @@
     "bench": "node scripts/build-harness.mjs && node scripts/bench.mjs",
     "demo": "node scripts/build-harness.mjs && node scripts/serve-demo.mjs",
     "compare-layout": "node scripts/build-harness.mjs && node scripts/compare-layout.mjs",
-    "generate-metrics": "node scripts/generate-metrics.mjs"
+    "generate-metrics": "node scripts/generate-metrics.mjs",
+    "screenshots": "node scripts/build-harness.mjs && node scripts/screenshots.mjs"
   },
   "devDependencies": {
     "@erseco/mind-elixir-export-mermaid": "0.1.3",
