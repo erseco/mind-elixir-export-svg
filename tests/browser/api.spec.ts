@@ -36,8 +36,9 @@ test("downloadSvg downloads a file and cleans up", async ({ page }) => {
     page.waitForEvent("download"),
     page.evaluate(() => (window as any).harness.downloadSvg((window as any).__mind, 'mi "mapa"/1.svg')),
   ]);
-  // Characters that are not allowed in file names become "_" (one per run of them)
-  expect(download.suggestedFilename()).toBe("mi _mapa_1.svg");
+  // Characters that are not allowed in file names become "_" (one per run of them); browsers may
+  // sanitize further (WebKit on Linux also replaces the space)
+  expect(download.suggestedFilename()).toMatch(/^mi[ _]_mapa_1\.svg$/);
   const content = await (await download.createReadStream()).toArray();
   expect(Buffer.concat(content).toString("utf8")).toMatch(/^<svg xmlns="http:\/\/www.w3.org\/2000\/svg"/);
   await page.waitForFunction(() => (window as any).__urls.revoked.length === 1);
