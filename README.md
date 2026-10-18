@@ -61,8 +61,6 @@ and leaves out arrow and summary labels
 
 ## Install
 
-Not published to npm yet. Once it is:
-
 ```sh
 npm install @erseco/mind-elixir-export-svg
 ```

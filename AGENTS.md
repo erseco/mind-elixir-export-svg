@@ -30,8 +30,7 @@ from the data alone (like Pele: font metrics, no DOM). MIT. Not an official Mind
 
 Before release: `npm ci`, `npm run check`, `npm run test:e2e`, `npm run test:package`.
 
-Publishing is not enabled yet (`"private": true` in package.json). Once it is authorized: remove
-`private`, then after CI passes publish a GitHub Release whose title and new tag are `v` plus the
-exact `package.json` version. The release triggers `publish.yml`, which uses npm Trusted
+Publishing needs the maintainer's authorization. After CI passes, publish a GitHub Release whose
+title and new tag are `v` plus the exact `package.json` version. The release triggers `publish.yml`, which uses npm Trusted
 Publishing (OIDC), environment `npm`, and publishes the tarball the package test installed.
 Never replace a published release. Record changes in CHANGELOG.md.

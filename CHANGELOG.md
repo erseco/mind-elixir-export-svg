@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-10-18
 
 - First version: `renderSvg`, `exportSvg` and `downloadSvg` render Mind Elixir data (or an
   instance) as standalone SVG with native text and vector shapes, laid out as Mind Elixir 5.15.1
