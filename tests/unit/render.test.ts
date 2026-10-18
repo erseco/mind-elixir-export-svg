@@ -5,6 +5,7 @@ import {
   downloadSvg,
   exportSvg,
   renderSvg,
+  toDataUrl,
   type SvgExportOptions,
   type SvgExportResult,
   type WithVectorSvgExport,
@@ -438,6 +439,13 @@ describe("helpers", () => {
     const blob = await exportSvg(f);
     expect(blob.type).toBe("image/svg+xml;charset=utf-8");
     expect(await blob.text()).toBe((await renderSvg(f)).svg);
+  });
+
+  it("toDataUrl encodes the SVG's UTF-8 bytes as base64, past one chunk", async () => {
+    const svg = (await render("rich")).svg + "<!--" + "ñ🌍".repeat(20000) + "-->";
+    const url = toDataUrl(svg);
+    expect(url.startsWith("data:image/svg+xml;base64,")).toBe(true);
+    expect(Buffer.from(url.split(",")[1]!, "base64").toString("utf8")).toBe(svg);
   });
 
   it("downloadSvg clicks a link to an object URL and revokes it", async () => {

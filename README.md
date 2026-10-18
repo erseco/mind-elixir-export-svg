@@ -44,14 +44,14 @@ Styles, tags, a summary and an arrow with its label, both sides. More SVGs, as G
 
 ## Why not the alternatives
 
-|                                 | PNG screenshot  | Mermaid + Pele  | This package |
-| ------------------------------- | --------------- | --------------- | ------------ |
-| Vector shapes, selectable text  | No              | Yes             | Yes          |
-| Mind Elixir's own layout        | A picture of it | No, Mermaid's   | Yes          |
-| Colours, sizes, styles per node | Captured        | Bold and italic | Yes          |
-| Arrows, summaries, tags, images | Captured        | No              | Yes          |
-| Without a browser               | No              | Yes             | Yes          |
-| Size, 311-node map              | 1,393,514 B     | 128,543 B       | 109,911 B    |
+|                                 | PNG screenshot        | Mermaid + Pele     | This package       |
+| ------------------------------- | --------------------- | ------------------ | ------------------ |
+| Vector shapes, selectable text  | No                    | Yes                | Yes                |
+| Mind Elixir's own layout        | A picture of it       | No, Mermaid's      | Yes                |
+| Colours, sizes, styles per node | Captured              | Bold and italic    | Yes                |
+| Arrows, summaries, tags, images | Captured              | No                 | Yes                |
+| Without a browser               | No                    | Yes                | Yes                |
+| Size, 311-node map              | 1,393,514 B (1.39 MB) | 128,543 B (129 kB) | 109,911 B (110 kB) |
 
 Mind Elixir's own `exportSvg()` is deprecated: it needs the editor's DOM, puts captions in
 `foreignObject` (which svg2pdf.js cannot draw), writes `width="auto"`, inserts captions as HTML
@@ -71,7 +71,7 @@ package at runtime; the layout follows Mind Elixir 5.15.1.
 ## Use
 
 ```ts
-import { renderSvg, exportSvg, downloadSvg, DARK_THEME } from "@erseco/mind-elixir-export-svg";
+import { renderSvg, exportSvg, downloadSvg, toDataUrl, DARK_THEME } from "@erseco/mind-elixir-export-svg";
 
 const result = await renderSvg(data, { padding: 24, title: "Photosynthesis" });
 result.svg; // '<svg xmlns="http://www.w3.org/2000/svg" width="733.08" height="101" ...'
@@ -80,6 +80,7 @@ result.warnings; // [{ code: "IMAGE_NOT_EMBEDDED", message: "...", nodeId: "a1" 
 await renderSvg(data, { theme: DARK_THEME, direction: 3 }); // top-down, dark
 const blob = await exportSvg(data); // image/svg+xml;charset=utf-8
 await downloadSvg(mind, "photosynthesis.svg"); // in a browser
+img.src = toDataUrl(result.svg); // data:image/svg+xml;base64,...
 ```
 
 As a Mind Elixir plugin, it adds `mind.exportVectorSvg()` (Mind Elixir's deprecated `exportSvg`
@@ -174,16 +175,16 @@ JPEG, GIF, WebP or AVIF, and every number is checked to be finite. Nothing is fe
 
 `npm run bench` (Node 26 for the SVG; the PNG in Chromium 156 from the editor; median of 7):
 
-| Map                 | SVG       | gzip    | Render | PNG (modern-screenshot) | Render   | Mermaid source | Pele's SVG of it |
-| ------------------- | --------- | ------- | ------ | ----------------------- | -------- | -------------- | ---------------- |
-| 3 nodes             | 1,500 B   | 563 B   | 0.2 ms | 19,046 B                | 8.0 ms   | 84 B           | 2,002 B          |
-| 16 nodes (13 shown) | 6,023 B   | 1,501 B | 0.4 ms | 94,735 B                | 24.4 ms  | 516 B          | 6,826 B          |
-| 311 nodes           | 109,911 B | 6,569 B | 5.8 ms | 1,393,514 B             | 349.7 ms | 8,884 B        | 128,543 B        |
+| Map                 | SVG                | gzip             | Render | PNG (modern-screenshot) | Render   | Mermaid source   | Pele's SVG of it   |
+| ------------------- | ------------------ | ---------------- | ------ | ----------------------- | -------- | ---------------- | ------------------ |
+| 3 nodes             | 1,500 B (1.5 kB)   | 563 B            | 0.2 ms | 19,046 B (19 kB)        | 8.0 ms   | 84 B             | 2,002 B (2.0 kB)   |
+| 16 nodes (13 shown) | 6,023 B (6.0 kB)   | 1,501 B (1.5 kB) | 0.4 ms | 94,735 B (95 kB)        | 24.4 ms  | 516 B            | 6,826 B (6.8 kB)   |
+| 311 nodes           | 109,911 B (110 kB) | 6,569 B (6.6 kB) | 5.8 ms | 1,393,514 B (1.39 MB)   | 349.7 ms | 8,884 B (8.9 kB) | 128,543 B (129 kB) |
 
 ## Using it in eXeLearning
 
-[docs/EXELEARNING.md](docs/EXELEARNING.md): saving the map's SVG on save, rendering it on the
-server for maps that were never re-saved, and embedding it in SCORM, EPUB and HTML exports.
+eXeLearning's mind map editor saves each map as this SVG, in an `<img>`, next to the map's JSON
+([docs/EXELEARNING.md](docs/EXELEARNING.md)).
 
 ## Development
 

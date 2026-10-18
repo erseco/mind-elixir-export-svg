@@ -391,6 +391,14 @@ export async function exportSvg(input: MindElixirInput, options?: SvgExportOptio
   return new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
 }
 
+/** An SVG as a base64 `data:` URL, for an `<img src>` (UTF-8 safe, in Node and browsers). */
+export function toDataUrl(svg: string): string {
+  const bytes = new TextEncoder().encode(svg);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return `data:image/svg+xml;base64,${btoa(binary)}`;
+}
+
 /** Downloads the map as an SVG file (in a browser). Resolves with the export result. */
 export async function downloadSvg(
   input: MindElixirInput,

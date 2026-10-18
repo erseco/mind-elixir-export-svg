@@ -1,6 +1,6 @@
 {
   "name": "@erseco/mind-elixir-export-svg",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Render Mind Elixir mind maps as standalone SVG with native text and vector shapes, laid out as Mind Elixir does, without a browser",
   "license": "MIT",
   "author": "Ernesto Serrano",
