@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+artifacts/
+test-results/
+playwright-report/
+examples/demo/dist/
+tests/browser/.harness/
+*.log
+.DS_Store
+.scratch/

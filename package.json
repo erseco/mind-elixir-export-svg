@@ -1,0 +1,84 @@
+{
+  "name": "@erseco/mind-elixir-export-svg",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Export Mind Elixir mind maps as faithful, self-contained SVG with native text and vector shapes",
+  "license": "MIT",
+  "author": "Ernesto Serrano",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erseco/mind-elixir-export-svg.git"
+  },
+  "homepage": "https://github.com/erseco/mind-elixir-export-svg#readme",
+  "bugs": {
+    "url": "https://github.com/erseco/mind-elixir-export-svg/issues"
+  },
+  "keywords": [
+    "mind-elixir",
+    "mindmap",
+    "mind-map",
+    "svg",
+    "export",
+    "vector"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "mind-elixir": ">=5.15.1 <6"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "harness": "node scripts/build-harness.mjs",
+    "test:e2e": "node scripts/build-harness.mjs && playwright test",
+    "check": "npm run format:check && npm run typecheck && npm test && npm run build",
+    "prepack": "npm run build",
+    "test:package": "node scripts/test-package.mjs",
+    "bench": "node scripts/build-harness.mjs && node scripts/bench.mjs",
+    "demo": "node scripts/build-harness.mjs && node scripts/serve-demo.mjs"
+  },
+  "devDependencies": {
+    "@erseco/mind-elixir-export-mermaid": "0.1.3",
+    "@fontsource/inter": "5.3.0",
+    "@playwright/test": "1.64.1",
+    "@resvg/resvg-js": "2.6.2",
+    "@types/node": "26.6.5",
+    "@types/pngjs": "6.0.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "@xmldom/xmldom": "0.9.12",
+    "esbuild": "0.28.2",
+    "jspdf": "4.2.1",
+    "mind-elixir": "5.15.1",
+    "modern-screenshot": "4.7.0",
+    "pele": "1.6.0",
+    "pixelmatch": "8.0.0",
+    "pngjs": "7.0.0",
+    "prettier": "3.9.10",
+    "svg2pdf.js": "2.8.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}

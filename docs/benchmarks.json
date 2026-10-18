@@ -1,0 +1,94 @@
+{
+  "env": {
+    "date": "2026-10-18T11:32:17.759Z",
+    "chromium": "156.0.8078.4",
+    "node": "v26.12.0",
+    "runs": 7,
+    "mindElixir": "5.15.1",
+    "modernScreenshot": "4.7.0",
+    "pele": "1.6.0"
+  },
+  "results": [
+    {
+      "fixture": "three",
+      "nodes": 3,
+      "svg": {
+        "bytes": 1958,
+        "gzip": 649,
+        "ms": 0.3,
+        "warnings": 0,
+        "topics": "3/3"
+      },
+      "png": {
+        "bytes": 19046,
+        "ms": 7.9
+      },
+      "mermaid": {
+        "bytes": 84,
+        "gzip": 82,
+        "peleSvgBytes": 2002,
+        "peleSvgGzip": 741
+      },
+      "legacySvg": {
+        "bytes": 3178,
+        "gzip": 876,
+        "ms": 0.2,
+        "foreignObject": 3
+      }
+    },
+    {
+      "fixture": "rich",
+      "nodes": 13,
+      "svg": {
+        "bytes": 8029,
+        "gzip": 1638,
+        "ms": 0.9,
+        "warnings": 0,
+        "topics": "13/13"
+      },
+      "png": {
+        "bytes": 94735,
+        "ms": 24.5
+      },
+      "mermaid": {
+        "bytes": 516,
+        "gzip": 351,
+        "peleSvgBytes": 6826,
+        "peleSvgGzip": 1521
+      },
+      "legacySvg": {
+        "bytes": 12292,
+        "gzip": 1863,
+        "ms": 0.4,
+        "foreignObject": 13
+      }
+    },
+    {
+      "fixture": "large",
+      "nodes": 311,
+      "svg": {
+        "bytes": 157440,
+        "gzip": 7985,
+        "ms": 12.2,
+        "warnings": 0,
+        "topics": "311/311"
+      },
+      "png": {
+        "bytes": 1393514,
+        "ms": 355.5
+      },
+      "mermaid": {
+        "bytes": 8884,
+        "gzip": 1492,
+        "peleSvgBytes": 128543,
+        "peleSvgGzip": 7248
+      },
+      "legacySvg": {
+        "bytes": 277062,
+        "gzip": 12847,
+        "ms": 4.4,
+        "foreignObject": 311
+      }
+    }
+  ]
+}
