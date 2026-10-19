@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-19
 
 - Layout lengths for Mind Elixir 5.15.1 live in `src/profile.ts`
   (`SUPPORTED_MIND_ELIXIR_VERSION`). `npm run test:compat` measures a chosen Mind Elixir version
