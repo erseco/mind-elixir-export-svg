@@ -30,6 +30,7 @@ const load = async (entry) => {
   return import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString("base64")}`);
 };
 
+const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const pkgJson = JSON.parse(readFileSync("package.json", "utf8"));
 const { SUPPORTED_MIND_ELIXIR_VERSION } = await load("src/profile.ts");
 const { MEASURED_FIXTURES, withinTolerance, KNOWN_LIMITATIONS } = await load("tests/tolerances.ts");
@@ -37,6 +38,7 @@ const { MEASURED_FIXTURES, withinTolerance, KNOWN_LIMITATIONS } = await load("te
 let resolved;
 try {
   resolved = resolveSpec(spec);
+  if (!SEMVER.test(resolved.version)) throw new Error(`npm returned an unexpected version: ${resolved.version}`);
 } catch (error) {
   failResolve(error);
 }
@@ -54,6 +56,7 @@ execFileSync("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", "
 });
 const mindElixir = path.join(installRoot, "node_modules", "mind-elixir");
 const installed = JSON.parse(readFileSync(path.join(mindElixir, "package.json"), "utf8")).version;
+if (!SEMVER.test(installed)) throw new Error(`Installed Mind Elixir has an unexpected version: ${installed}`);
 execFileSync("node", ["scripts/build-harness.mjs"], {
   stdio: "inherit",
   env: { ...process.env, MIND_ELIXIR_PACKAGE: mindElixir },
@@ -163,7 +166,9 @@ const report = {
 
 const outDir = path.resolve("artifacts/compat");
 mkdirSync(outDir, { recursive: true });
-const stem = path.join(outDir, installed.replace(/[^A-Za-z0-9._-]/g, "_"));
+// SEMVER already rules out separators; the check keeps the reports inside artifacts/compat.
+const stem = path.join(outDir, installed);
+if (path.dirname(stem) !== outDir) throw new Error(`Report path escapes ${outDir}: ${stem}`);
 writeFileSync(`${stem}.json`, JSON.stringify(report, null, 2) + "\n");
 writeFileSync(`${stem}.md`, markdown(report));
 console.log(`\n${report.summary}`);

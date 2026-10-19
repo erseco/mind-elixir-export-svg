@@ -1,0 +1,6 @@
+---
+# scripts/ is maintainer tooling (layout measurement, compat runs) and is not published.
+# Its ESLint security findings are false positives: keys come from fixed fixtures and
+# browser names, and the dynamic import loads this repo's own esbuild output.
+exclude_paths:
+  - "scripts/**"
