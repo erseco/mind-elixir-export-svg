@@ -28,6 +28,7 @@ export interface ResolvedOptions {
   measure: TextMeasurer;
   links: "preserve" | "text";
   textLength: boolean;
+  textDecoration: boolean;
   embedImages: boolean;
   resolveImage: ImageResolver | undefined;
   strict: boolean;
@@ -134,6 +135,7 @@ export function resolveOptions(options: SvgExportOptions = {}): ResolvedOptions 
     measure,
     links: options.links ?? "preserve",
     textLength: options.textLength !== false,
+    textDecoration: options.textDecoration === true,
     embedImages: options.embedImages !== false,
     resolveImage: options.resolveImage,
     strict: options.strict === true,

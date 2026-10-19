@@ -155,6 +155,36 @@ describe("renderSvg", () => {
     expect(tight.width).toBeLessThan(roomy.width);
   });
 
+  it("draws a topic's underline and strike-through only when asked", async () => {
+    const data = {
+      nodeData: {
+        topic: "Root",
+        children: [
+          { topic: "Under", style: { textDecoration: "underline" } },
+          { topic: "Both", style: { textDecoration: "Line-Through UNDERLINE" }, tags: ["tag"] },
+          { topic: "Shorthand", style: { textDecoration: "underline wavy red" } },
+          { topic: "Hostile", style: { textDecoration: 'underline" onload="alert(1)' } },
+          { topic: "Plain" },
+        ],
+      },
+    };
+    // Off by default, as Mind Elixir does not display them
+    expect((await renderSvg(data)).svg).not.toContain("text-decoration");
+    const doc = check(await renderSvg(data, { textDecoration: true }));
+    const decoration = (text: string) =>
+      elements(doc)
+        .find((e) => e.localName === "text" && e.textContent === text)
+        ?.getAttribute("text-decoration") ?? null;
+    expect(decoration("Under")).toBe("underline");
+    expect(decoration("Both")).toBe("underline line-through");
+    // Only the caption is decorated, not its tag; only the lines are drawn, not style or colour
+    expect(decoration("tag")).toBeNull();
+    expect(decoration("Shorthand")).toBe("underline");
+    // A value CSS would reject draws nothing, and never reaches the markup
+    expect(decoration("Hostile")).toBeNull();
+    expect(decoration("Plain")).toBeNull();
+  });
+
   it("lays out with another measurer", async () => {
     const mono = {
       width: (text: string, font: { size: number }) => [...text].length * font.size * 0.6,

@@ -111,6 +111,7 @@ when it differs from the declared theme (a page override, a partial theme, compa
 | `fontFamily`           | Arial stack        | The font family written into the SVG.                                                                                                   |
 | `measureText`          | Arial              | `{ width(text, font), vertical }`: lay out for another font.                                                                            |
 | `textLength`           | `true`             | Write each line's width as `textLength`, so a viewer with other fonts fits it.                                                          |
+| `textDecoration`       | `false`            | Draw a topic's underline, overline and strike-through (`style.textDecoration`); see [What is drawn](#what-is-drawn).                    |
 | `links`                | `"preserve"`       | Node links become SVG links (http, https, mailto); `"text"` keeps only the 🔗.                                                          |
 | `embedImages`          | `true`             | Embed the map's images.                                                                                                                 |
 | `resolveImage`         | none               | `(url, { signal }) => Blob \| dataURL \| null` for images that are not `data:` URLs.                                                    |
@@ -150,9 +151,18 @@ labels), and the theme's background. Left, right, both sides and top-down layout
 branches are drawn folded.
 
 Not drawn, with a warning: the content of custom HTML nodes (`dangerouslySetInnerHTML`),
-colours CSS can express but this cannot (gradients, `var()`). Underline and strike-through from
-a node's style are not drawn, because Mind Elixir 5.15.1 does not display them either (they do
-not reach the caption, which is an inline block).
+colours CSS can express but this cannot (gradients, `var()`).
+
+Underline, overline and strike-through from a topic's `style.textDecoration` are drawn only with
+`textDecoration: true`. Mind Elixir 5.15.1 does not display them (they do not reach the caption,
+which is an inline block), so the default matches the editor. Turn the option on when the page
+shows them, for example with:
+
+```css
+.map-container me-tpc > .text {
+  text-decoration: inherit;
+}
+```
 
 ## Accuracy
 

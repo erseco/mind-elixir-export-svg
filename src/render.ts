@@ -1,5 +1,5 @@
 import { arrowGeometry, defaultDeltas, mainBranch, subBranch, summaryGeometry, type Side } from "./connectors.js";
-import { parseColor, type Color, type Radii } from "./css.js";
+import { decorationLines, parseColor, type Color, type Radii } from "./css.js";
 import { readMap, type MapData } from "./data.js";
 import { SvgExportError, throwIfAborted } from "./errors.js";
 import { pathBounds as bounds, type Box, type Matrix } from "./geometry.js";
@@ -209,11 +209,13 @@ async function draw(
       );
     }
     const fallback = theme.color ?? BLACK;
+    // Only the caption: Mind Elixir's tags, icons and link are outside the decorated text
+    const decoration = options.textDecoration ? decorationLines((p.node.style.textDecoration ?? "").toLowerCase()) : [];
     if (c.text.length)
       shapes.push(
         textShape(
           "nodes",
-          c.text.map((t) => run(t, p.topic, options, fallback)),
+          c.text.map((t) => ({ ...run(t, p.topic, options, fallback), decoration })),
         ),
       );
     if (c.link && p.node.hyperLink) {

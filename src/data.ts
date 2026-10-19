@@ -27,6 +27,7 @@ export interface NodeStyle {
   fontStyle?: string | undefined;
   color?: string | undefined;
   background?: string | undefined;
+  textDecoration?: string | undefined;
 }
 
 export interface MapArrow {
@@ -85,7 +86,7 @@ function point(v: unknown): { x: number; y: number } | undefined {
 function style(v: unknown): NodeStyle {
   if (!isObject(v)) return {};
   const out: NodeStyle = {};
-  for (const key of ["fontSize", "fontWeight", "fontStyle", "color", "background"] as const) {
+  for (const key of ["fontSize", "fontWeight", "fontStyle", "color", "background", "textDecoration"] as const) {
     const value = str(v[key]) ?? (typeof v[key] === "number" ? String(v[key]) : undefined);
     if (value !== undefined) out[key] = value;
   }
