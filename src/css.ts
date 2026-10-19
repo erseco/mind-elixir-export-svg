@@ -1,6 +1,6 @@
 /**
- * Converts computed CSS values into SVG presentation values. Only values that were understood
- * are returned, so nothing from a stylesheet reaches the SVG unchecked.
+ * Parses CSS colour and length strings into SVG presentation values. Only values that were
+ * understood are returned, so a theme or a live custom property cannot carry a URL or markup.
  */
 
 export interface Color {

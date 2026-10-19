@@ -84,15 +84,16 @@ export function resolveOptions(options: SvgExportOptions = {}): ResolvedOptions 
     invalid("direction must be 0, 1, 2 or 3");
   }
   const theme = options.theme;
-  if (
-    theme !== undefined &&
-    (typeof theme !== "object" ||
-      theme === null ||
-      !Array.isArray(theme.palette) ||
-      typeof theme.cssVar !== "object" ||
-      theme.cssVar === null)
-  ) {
-    invalid("theme must be a Mind Elixir theme ({ palette, cssVar })");
+  if (theme !== undefined) {
+    if (typeof theme !== "object" || theme === null || !Array.isArray(theme.palette)) {
+      invalid("theme must be a Mind Elixir theme ({ palette, cssVar })");
+    }
+    if (
+      theme.cssVar !== undefined &&
+      (typeof theme.cssVar !== "object" || theme.cssVar === null || Array.isArray(theme.cssVar))
+    ) {
+      invalid("theme must be a Mind Elixir theme ({ palette, cssVar })");
+    }
   }
   const fontFamily = text("fontFamily", options.fontFamily) ?? DEFAULT_FONT_FAMILY;
   // Written into an attribute (escaped): refuse what is not a plain font list

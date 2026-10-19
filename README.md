@@ -66,7 +66,8 @@ npm install @erseco/mind-elixir-export-svg
 ```
 
 It has no dependencies. It reads Mind Elixir data structurally, so it needs no Mind Elixir
-package at runtime; the layout follows Mind Elixir 5.15.1.
+package at runtime. The layout follows Mind Elixir 5.15.1
+(`SUPPORTED_MIND_ELIXIR_VERSION`).
 
 ## Use
 
@@ -93,25 +94,29 @@ mind.install(createSvgExportPlugin({ background: "transparent" }));
 const { svg } = await (mind as WithVectorSvgExport<typeof mind>).exportVectorSvg();
 ```
 
+Without an explicit `theme`, the plugin reads the container's computed CSS variables and uses one
+when it differs from the declared theme (a page override, a partial theme, compact gaps).
+`renderSvg` itself does not read the page. A transparent background stays transparent.
+
 ### Options
 
-| Option                 | Default            |                                                                                                                                       |
-| ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `padding`              | `24`               | Space around the map, in px.                                                                                                          |
-| `background`           | `"theme"`          | The theme's `--bgcolor`; `"transparent"`; or `#hex`, `rgb()`, `rgba()`, a colour name.                                                |
-| `title`, `description` | root topic, none   | The SVG's `<title>` and `<desc>`.                                                                                                     |
-| `idPrefix`             | `"mindmap-svg"`    | Prefix of the ids in the SVG; give each map on a page its own.                                                                        |
-| `theme`                | data's, else light | A Mind Elixir theme (`{ palette, cssVar }`); `THEME` and `DARK_THEME` are exported.                                                   |
-| `direction`            | data's, else `2`   | 0 left, 1 right, 2 both sides, 3 top-down.                                                                                            |
-| `fontFamily`           | Arial stack        | The font family written into the SVG.                                                                                                 |
-| `measureText`          | Arial              | `{ width(text, font), vertical }`: lay out for another font.                                                                          |
-| `textLength`           | `true`             | Write each line's width as `textLength`, so a viewer with other fonts fits it.                                                        |
-| `links`                | `"preserve"`       | Node links become SVG links (http, https, mailto); `"text"` keeps only the 🔗.                                                        |
-| `embedImages`          | `true`             | Embed the map's images.                                                                                                               |
-| `resolveImage`         | none               | `(url, { signal }) => Blob \| dataURL \| null` for images that are not `data:` URLs.                                                  |
-| `strict`               | `false`            | Throw instead of warning when something cannot be rendered faithfully.                                                                |
-| `signal`               | none               | An `AbortSignal` to cancel.                                                                                                           |
-| `limits`               | see below          | `maxNodes` 10,000, `maxDepth` 1,000, `maxTextLength` 1,000,000, `maxImages` 200, `maxImageBytes` 5 MiB, `maxOutputLength` 50,000,000. |
+| Option                 | Default            |                                                                                                                                         |
+| ---------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `padding`              | `24`               | Space around the map, in px.                                                                                                            |
+| `background`           | `"theme"`          | The theme's `--bgcolor`; `"transparent"`; or `#hex`, `rgb()`, `rgba()`, a colour name.                                                  |
+| `title`, `description` | root topic, none   | The SVG's `<title>` and `<desc>`.                                                                                                       |
+| `idPrefix`             | `"mindmap-svg"`    | Prefix of the ids in the SVG; give each map on a page its own.                                                                          |
+| `theme`                | data's, else light | A Mind Elixir theme. `type: "dark"` fills gaps from `DARK_THEME`; `cssVar` may be partial. `compact` on the data sets the compact gaps. |
+| `direction`            | data's, else `2`   | 0 left, 1 right, 2 both sides, 3 top-down.                                                                                              |
+| `fontFamily`           | Arial stack        | The font family written into the SVG.                                                                                                   |
+| `measureText`          | Arial              | `{ width(text, font), vertical }`: lay out for another font.                                                                            |
+| `textLength`           | `true`             | Write each line's width as `textLength`, so a viewer with other fonts fits it.                                                          |
+| `links`                | `"preserve"`       | Node links become SVG links (http, https, mailto); `"text"` keeps only the 🔗.                                                          |
+| `embedImages`          | `true`             | Embed the map's images.                                                                                                                 |
+| `resolveImage`         | none               | `(url, { signal }) => Blob \| dataURL \| null` for images that are not `data:` URLs.                                                    |
+| `strict`               | `false`            | Throw instead of warning when something cannot be rendered faithfully.                                                                  |
+| `signal`               | none               | An `AbortSignal` to cancel.                                                                                                             |
+| `limits`               | see below          | `maxNodes` 10,000, `maxDepth` 1,000, `maxTextLength` 1,000,000, `maxImages` 200, `maxImageBytes` 5 MiB, `maxOutputLength` 50,000,000.   |
 
 Errors are `SvgExportError` with a `code`: `INVALID_DATA`, `INVALID_OPTIONS`,
 `INVALID_GEOMETRY`, `LIMIT_EXCEEDED`, `ABORTED`, or, in strict mode, the warning's code.
@@ -194,10 +199,15 @@ npx playwright install chromium firefox webkit
 npm run check           # format, types, unit tests (100% coverage), build
 npm run test:e2e        # against real Mind Elixir in Chromium, Firefox and WebKit
 npm run test:package    # pack, install in an empty project, render from it in Node
-npm run compare-layout  # docs/layout-deviation.json
+npm run compare-layout  # docs/layout-deviation.json, for the pinned Mind Elixir
+npm run test:compat -- --mind-elixir-version 5.15.1   # or latest, or next
 npm run bench           # docs/benchmarks.json
 npm run demo            # http://127.0.0.1:5173: the editor next to its export
 ```
+
+`test:compat` installs the requested Mind Elixir beside the repo and writes
+`artifacts/compat/`. `latest` means the newest stable release. How to read the report, and how to
+adapt the layout when Mind Elixir changes, is in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [AGENTS.md](AGENTS.md) and
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

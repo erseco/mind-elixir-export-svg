@@ -31,9 +31,11 @@ for (const name of ["single", "three", "topDown", "wide", "deep", "large"]) {
     const o = mind.nodes.getBoundingClientRect();
     const r2 = (v) => Math.round(v * 100) / 100;
     return Object.fromEntries(
-      [...mind.nodes.querySelectorAll("me-tpc")].map((t) => {
+      [...mind.nodes.querySelectorAll("me-tpc, .me-tpc")].map((t) => {
         const r = t.getBoundingClientRect();
-        return [t.dataset.nodeid.slice(2), [r2(r.left - o.left), r2(r.top - o.top), r2(r.width), r2(r.height)]];
+        const id =
+          t.nodeObj && typeof t.nodeObj.id === "string" ? t.nodeObj.id : String(t.dataset.nodeid || "").slice(2);
+        return [id, [r2(r.left - o.left), r2(r.top - o.top), r2(r.width), r2(r.height)]];
       }),
     );
   }, FIXTURES[name]);

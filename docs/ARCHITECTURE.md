@@ -20,8 +20,16 @@ renderSvg(input)                          src/render.ts
   renderDocument(scene)                   src/svg/document.ts scene → SVG string
 ```
 
+`src/profile.ts` holds the stylesheet lengths and `SUPPORTED_MIND_ELIXIR_VERSION`. The SVG
+writer, validation and font tables do not follow a Mind Elixir release. Geometry does.
+
+Mind Elixir's `layoutSSR` assigns left and right and emits HTML. It does not compute boxes, so
+it cannot replace `src/layout.ts`. The official `@mind-elixir/export-mindmap` package clones the
+editor DOM and uses `foreignObject` and canvas. This package does not.
+
 Everything is unit-tested in Node to 100% coverage. The browser tests use real Mind Elixir as the
-reference the layout is measured against.
+reference the layout is measured against. `npm run test:compat` repeats that measurement for
+another Mind Elixir version (COMPATIBILITY.md).
 
 ## Text metrics
 
@@ -44,7 +52,8 @@ Another font: pass `measureText` (`width(text, font)` and `vertical`).
 ## The layout model
 
 `src/layout.ts` reproduces Mind Elixir 5.15.1's `index.css` for its DOM
-(`me-nodes > me-main / me-root > me-wrapper > me-parent > me-tpc`, `me-children`):
+(`me-nodes > me-main / me-root > me-wrapper > me-parent > me-tpc`, `me-children`). The pixel
+lengths are `LAYOUT` in `src/profile.ts`:
 
 - **Topics** (`me-tpc`, border-box, `max-width: 35em`, `white-space: pre-wrap`). Root: 25 px,
   padding 10/30, 2 px border; main: padding 8/25, 2 px border in the branch colour; sub: padding
@@ -92,10 +101,27 @@ surrogates), every number through one formatter (two decimals, refusing non-fini
 Each line of text is a `<tspan>` at its computed position, with `textLength` set to its computed
 width. There is no `style`, `script`, `foreignObject`, `use` or external reference.
 
+## Themes and a live editor
+
+`resolveTheme` follows `changeTheme`. `type: "dark"` starts from `DARK_THEME`; any other type
+starts from `THEME`. `cssVar` overrides that base, including a partial set. When the map is
+`compact`, the compact gaps (`--node-gap-x: 15px`, `--node-gap-y: 2px`, `--main-gap-x: 30px`,
+`--main-gap-y: 6px`) are written last, so they win over a theme that also sets the gaps. A
+transparent `--bgcolor` stays transparent: the page rectangle is omitted.
+
+`renderSvg` reads only the data and the options. The plugin can also read the container's
+computed values for the variables in `THEME_VARS` (`src/live.ts`). It applies a variable when
+the parsed colour or length differs from the declared theme. An explicit `theme` in the options
+or in the plugin defaults is left as given. Equivalent spellings (`#f6f6f6` and `rgb(246, 246,
+246)`, `30px` and `30.00px`) are the same value, so a default editor still exports the same
+bytes as `renderSvg(mind)`.
+
 ## What it does not do
 
 - It does not lay out custom HTML (`dangerouslySetInnerHTML`): that needs a browser.
-- It does not read a live editor's DOM. An editor with custom CSS (other fonts, paddings) is
-  reproduced only if the same values are given (`theme`, `measureText`).
+- It does not shape Arabic or Hebrew. Captions are measured left to right. Mind Elixir lets the
+  browser reorder those scripts.
 - Fallback fonts for emoji and CJK differ by system, and Firefox's line heights differ from
   Chromium's and WebKit's: those maps are close, not exact (COMPATIBILITY.md).
+- It does not replace a transparent background with an opaque colour. The official raster
+  exporter does that for PNG.

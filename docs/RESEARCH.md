@@ -1,12 +1,24 @@
 # Research notes
 
 What was read before the renderer was written, and the requirement each finding became. State as
-of 2026-10-18.
+of 2026-10-18, with the corrections of 2026-10-19 below.
 
 The first version read the geometry from a live editor's DOM. It was replaced, before any release,
 by a renderer that computes the layout from the data with font metrics, as Pele does: one way to
 calculate, with no browser, so exports made on a server match those made in the editor. The
 findings below about Mind Elixir's DOM and CSS are what that layout model reproduces.
+
+Checked again on 2026-10-19 against mind-elixir-core, `@mind-elixir/export-mindmap` and Pele:
+
+- `layoutSSR` assigns sides and emits HTML. It does not compute boxes, so it cannot replace
+  `src/layout.ts`. The stylesheet lengths live in `src/profile.ts`.
+- `@mind-elixir/export-mindmap` clones the editor, uses `foreignObject` and canvas, and replaces
+  a transparent page background with an opaque colour for PNG. This package keeps native SVG text
+  and keeps a transparent background transparent.
+- `changeTheme` merges `{ ...(type === "dark" ? DARK_THEME : THEME).cssVar, ...theme.cssVar }`
+  and then, when compact, overwrites the four gap variables. `resolveTheme` does the same.
+- Exporting needs no browser. The earlier note that an export outside a browser fails is obsolete.
+  The plugin may read allow-listed computed CSS variables; `renderSvg` does not.
 
 ## Mind Elixir 5.15.1
 
@@ -44,20 +56,20 @@ display: inline-block }`; `.selected` is an `outline`; `me-epd` draws `add-circl
   block; CSS does not propagate text decorations into atomic inline boxes, so Mind Elixir 5.15.1
   does not display a node style's `textDecoration` (verified visually). → The export follows the
   display, and README says so.
-- **`src/utils/layout-ssr.ts`** lays a map out without the DOM: the starting point for a future
-  portable renderer (ARCHITECTURE.md).
+- **`src/utils/layout-ssr.ts`** assigns left and right and emits HTML. It does not compute
+  boxes. The portable layout is `src/layout.ts` (ARCHITECTURE.md).
 - **Plugins.** `mind.install(plugin)` calls `plugin(mind)`. → `createSvgExportPlugin()` adds
   `exportVectorSvg`, never overriding `exportSvg`.
 
 ### Issues
 
-| Issue                                                                                                                                                                                                         | Finding                                                                                                        | Requirement                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [#230](https://github.com/SSShooter/mind-elixir-core/issues/230) (closed)                                                                                                                                     | `foreignObject` breaks svg2pdf.js; the "no foreignObject" fallback did not wrap text and wrote `width="auto"`. | No `foreignObject`; lines from the browser's layout; every attribute a checked number. svg2pdf.js is tested. |
-| [#359](https://github.com/SSShooter/mind-elixir-core/issues/359) (closed)                                                                                                                                     | Arrow and summary labels missing from `exportSvg()`: they are HTML outside the SVG.                            | Labels exported and tested by text.                                                                          |
-| [#48](https://github.com/SSShooter/mind-elixir-core/issues/48) (closed)                                                                                                                                       | Exported positions misaligned.                                                                                 | One coordinate system; topic boxes compared with the editor to 0.02 px at several zoom levels.               |
-| [#386](https://github.com/SSShooter/mind-elixir-core/issues/386) (open)                                                                                                                                       | The maintainer prefers exporters as separate packages.                                                         | A separate package and an optional plugin.                                                                   |
-| [#285](https://github.com/SSShooter/mind-elixir-core/issues/285), [#241](https://github.com/SSShooter/mind-elixir-core/issues/241), [#223](https://github.com/SSShooter/mind-elixir-core/issues/223) (closed) | Exported images not the same as displayed; style problems; errors.                                             | Visual comparison with the editor in three browsers.                                                         |
+| Issue                                                                                                                                                                                                         | Finding                                                                                                        | Requirement                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [#230](https://github.com/SSShooter/mind-elixir-core/issues/230) (closed)                                                                                                                                     | `foreignObject` breaks svg2pdf.js; the "no foreignObject" fallback did not wrap text and wrote `width="auto"`. | No `foreignObject`; lines from the computed layout; every attribute a checked number. svg2pdf.js is tested. |
+| [#359](https://github.com/SSShooter/mind-elixir-core/issues/359) (closed)                                                                                                                                     | Arrow and summary labels missing from `exportSvg()`: they are HTML outside the SVG.                            | Labels exported and tested by text.                                                                         |
+| [#48](https://github.com/SSShooter/mind-elixir-core/issues/48) (closed)                                                                                                                                       | Exported positions misaligned.                                                                                 | One coordinate system; topic boxes compared with the editor to 0.02 px at several zoom levels.              |
+| [#386](https://github.com/SSShooter/mind-elixir-core/issues/386) (open)                                                                                                                                       | The maintainer prefers exporters as separate packages.                                                         | A separate package and an optional plugin.                                                                  |
+| [#285](https://github.com/SSShooter/mind-elixir-core/issues/285), [#241](https://github.com/SSShooter/mind-elixir-core/issues/241), [#223](https://github.com/SSShooter/mind-elixir-core/issues/223) (closed) | Exported images not the same as displayed; style problems; errors.                                             | Visual comparison with the editor in three browsers.                                                        |
 
 ## Pele 1.6.0
 
@@ -67,8 +79,8 @@ XML-illegal characters; numbers by hundredths), the mind map renderer and its se
 
 - Escape every string through one function that also drops characters XML cannot hold; write
   every number through one formatter. → `src/svg/xml.ts` (which also replaces lone surrogates).
-- Measuring text without a browser needs metrics tables and is an approximation. → Not used for
-  the browser export; noted for a portable renderer.
+- Measuring text without a browser needs metrics tables and is an approximation. → Used: Arimo's
+  advances and kerning, with estimates for scripts Arial lacks (ARCHITECTURE.md).
 - [#3](https://github.com/obsidianmd/pele/issues/3) (edge crossings in flowcharts),
   [#8](https://github.com/obsidianmd/pele/issues/8) (Unicode refused in Sankey names) and
   [#14](https://github.com/obsidianmd/pele/issues/14) (diagrams scaled down until unreadable) are
@@ -84,17 +96,17 @@ XML-illegal characters; numbers by hundredths), the mind map renderer and its se
   (modern-screenshot 4.7.0, `mindmapImgToSave`/`mindmapImgSize`) or Mermaid code
   (`@erseco/mind-elixir-export-mermaid` 0.1.3, `mindmapDiagram`). → `docs/EXELEARNING.md`.
 - [#2556](https://github.com/exelearning/exelearning/pull/2556) (open): Pele replaces Mermaid.js,
-  so diagrams pre-render without a DOM. → This SVG does not need it: it is made in the browser
-  and stored.
+  so diagrams pre-render without a DOM. → This SVG is computed from the data, so a server can
+  write it without a browser.
 - [#2490](https://github.com/exelearning/exelearning/issues/2490) (open): at some display scales
   (0.984375, 1.75) Chromium measured Mermaid labels wrong and the cut label was saved. →
-  Geometry comes from the editor's own layout, never re-wrapped; tested at editor zoom 0.9 to 2
-  and device pixel ratios 0.984375, 1.25 and 1.75; `textLength` keeps labels inside their nodes
-  in other renderers.
+  Geometry is computed from font metrics, so a display scale does not change the SVG.
+  `textLength` keeps labels inside their nodes in other renderers. The compat check scales the
+  editor to 0.5 and 1.25 and reports whether topic boxes move in layout space.
 - [#2544](https://github.com/exelearning/exelearning/issues/2544) (open): server exports failed
   with `CSSStyleSheet is not defined`. → Importing the package touches no DOM global (checked in
-  Node by `test:package`); exporting outside a browser fails with a typed error, never with a
-  `ReferenceError`.
+  Node by `test:package`). `renderSvg` runs in Node. `downloadSvg` is the call that needs a
+  browser, and it fails with a typed error when `document` is missing.
 - [#2475](https://github.com/exelearning/exelearning/issues/2475) (open): `String.replace` with a
   string replacement turned `$$` into `$`. → Every replacement in the library uses a function;
   captions with `$$`, `$&`, `$'` are tested.

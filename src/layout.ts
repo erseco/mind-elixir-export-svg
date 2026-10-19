@@ -2,14 +2,15 @@ import { parseColor, type Color } from "./css.js";
 import type { MapData, MapNode } from "./data.js";
 import type { Box } from "./geometry.js";
 import type { Side } from "./connectors.js";
+import { LAYOUT } from "./profile.js";
 import type { ResolvedTheme } from "./theme.js";
 import type { Font, TextMeasurer } from "./text/measure.js";
 import { wrapText } from "./text/wrap.js";
 
 /**
- * Lays a map out as Mind Elixir 5.15.1's stylesheet does (src/index.css), from the data and the
- * font metrics alone: topic boxes from their text, then the tree. The numbers below are that
- * stylesheet's (paddings, margins, gaps and font sizes).
+ * Lays a map out as Mind Elixir's stylesheet does, from the data and the font metrics alone:
+ * topic boxes from their text, then the tree. Lengths live in `src/profile.ts` (one Mind Elixir
+ * release). Gaps come from the resolved theme, including its compact overrides.
  */
 
 export type Kind = "root" | "main" | "sub";
@@ -77,15 +78,11 @@ interface Metrics {
   lineHeight: number;
 }
 
-const CONTAINER_FONT = 16; // .map-container font-size
-const ROOT_FONT = 25;
-const TAG_FONT = 12;
-
 function fontOf(node: MapNode, kind: Kind): Font {
   const size = parseFloat(node.style.fontSize ?? "");
   const weight = node.style.fontWeight === "bold" ? 700 : Number(node.style.fontWeight) || 400;
   return {
-    size: Number.isFinite(size) && size > 0 ? size : kind === "root" ? ROOT_FONT : CONTAINER_FONT,
+    size: Number.isFinite(size) && size > 0 ? size : kind === "root" ? LAYOUT.rootFont : LAYOUT.containerFont,
     weight: weight >= 1 && weight <= 1000 ? weight : 400,
     style: node.style.fontStyle === "italic" || node.style.fontStyle === "oblique" ? "italic" : "normal",
   };
@@ -179,16 +176,16 @@ export function layoutTopic(
   const fs = font.size;
   const style = {
     root: {
-      padding: [10, 30] as [number, number],
-      border: 2,
+      padding: [LAYOUT.rootPaddingY, LAYOUT.rootPaddingX] as [number, number],
+      border: LAYOUT.rootBorder,
       radius: theme.rootRadius,
       background: theme.rootBackground,
       color: theme.rootColor,
       borderColor: theme.rootBorder,
     },
     main: {
-      padding: [8, 25] as [number, number],
-      border: theme.mainBorder?.width ?? 2,
+      padding: [LAYOUT.mainPaddingY, LAYOUT.mainPaddingX] as [number, number],
+      border: theme.mainBorder?.width ?? LAYOUT.mainBorder,
       radius: theme.mainRadius,
       background: theme.mainBackground,
       color: theme.mainColor,
@@ -196,9 +193,9 @@ export function layoutTopic(
     },
     sub: down
       ? {
-          padding: [6, 12] as [number, number],
-          border: 1,
-          radius: 6,
+          padding: [LAYOUT.subDownPaddingY, LAYOUT.subDownPaddingX] as [number, number],
+          border: LAYOUT.subDownBorder,
+          radius: LAYOUT.subDownRadius,
           background: theme.mainBackground,
           color: theme.color,
           borderColor: theme.mainColor,
@@ -206,7 +203,7 @@ export function layoutTopic(
       : {
           padding: [theme.topicPadding, theme.topicPadding] as [number, number],
           border: 0,
-          radius: 3,
+          radius: LAYOUT.subRadius,
           background: null,
           color: theme.color,
           borderColor: null,
@@ -215,7 +212,7 @@ export function layoutTopic(
   const color = (node.style.color ? parseColor(node.style.color) : null) ?? style.color;
   const background = node.style.background ? (parseColor(node.style.background) ?? style.background) : style.background;
   const [padY, padX] = style.padding;
-  const maxWidth = 35 * fs; // me-tpc max-width: 35em (border-box)
+  const maxWidth = LAYOUT.maxWidthEm * fs; // me-tpc max-width: 35em (border-box)
   const available = Math.max(0, maxWidth - 2 * padX - 2 * style.border);
   const strut = normal(fs, m);
   const left = style.border + padX;
@@ -241,7 +238,7 @@ export function layoutTopic(
   // img { display: block; margin-bottom: 8px }
   if (node.image) {
     out.image = { x: left, y, width: node.image.width, height: node.image.height };
-    y += node.image.height + 8;
+    y += node.image.height + LAYOUT.imageGap;
     contentWidth = node.image.width;
   }
 
@@ -279,7 +276,7 @@ export function layoutTopic(
     const width = m.width("🔗", font);
     atoms.push({
       width,
-      marginLeft: 0.3 * fs,
+      marginLeft: LAYOUT.linkMarginEm * fs,
       marginRight: 0,
       ascent: strut.ascent,
       descent: strut.descent,
@@ -290,11 +287,11 @@ export function layoutTopic(
   }
   // span.icons: inline-block, margin-left: 5px; its spans have line-height: 1.3em
   if (node.icons.length) {
-    const icon = fixed(fs, 1.3 * fs, m);
+    const icon = fixed(fs, LAYOUT.iconLineHeight * fs, m);
     const widths = node.icons.map((i) => m.width(i, font));
     atoms.push({
       width: widths.reduce((a, b) => a + b, 0),
-      marginLeft: 5,
+      marginLeft: LAYOUT.iconGap,
       marginRight: 0,
       ascent: Math.max(strut.ascent, icon.ascent),
       descent: Math.max(strut.descent, icon.descent),
@@ -312,27 +309,34 @@ export function layoutTopic(
   contentWidth = Math.max(contentWidth, Math.min(available, row.maxContent));
 
   // div.tags: a block of inline-block spans (12px, line-height 1.3em, padding 2px 4px,
-  // margin-top 2px, margin-right 4px)
+  // margin-right 4px)
   if (node.tags.length) {
     // Tags are 12px but inherit the topic's weight and style
-    const tagFont: Font = { size: TAG_FONT, weight: font.weight, style: font.style };
-    const t = fixed(TAG_FONT, 1.3 * TAG_FONT, m);
+    const tagFont: Font = { size: LAYOUT.tagFont, weight: font.weight, style: font.style };
+    const t = fixed(LAYOUT.tagFont, LAYOUT.tagLineHeight * LAYOUT.tagFont, m);
+    const padX = LAYOUT.tagPadX;
+    const padY = LAYOUT.tagPadY;
     const tagAtoms: Atom[] = node.tags.map((tag) => {
       const textWidth = m.width(tag.text, tagFont);
       return {
-        width: textWidth + 8,
+        width: textWidth + 2 * padX,
         marginLeft: 0,
-        marginRight: 4,
-        ascent: 2 + 2 + t.ascent,
-        descent: t.descent + 2,
+        marginRight: LAYOUT.tagMarginRight,
+        ascent: LAYOUT.tagMarginTop + padY + t.ascent,
+        descent: t.descent + padY,
         place(x, baseline) {
-          const box = { x, y: baseline - t.ascent - 2, width: textWidth + 8, height: t.lineHeight + 4 };
+          const box = {
+            x,
+            y: baseline - t.ascent - padY,
+            width: textWidth + 2 * padX,
+            height: t.lineHeight + 2 * padY,
+          };
           out.tags.push({
             box,
             background: (tag.background ? parseColor(tag.background) : null) ?? { hex: "#d6f0f8", alpha: 1 },
             text: {
               text: tag.text,
-              x: x + 4,
+              x: x + padX,
               y: baseline,
               width: textWidth,
               font: tagFont,
@@ -398,7 +402,11 @@ export function layoutMap(map: MapData, theme: ResolvedTheme, m: TextMeasurer): 
     ? map.root.children.map((_, i) => i)
     : [...mainSides.keys()].sort((a, b) => (mainSides[a] === mainSides[b] ? a - b : mainSides[a] === "lhs" ? -1 : 1));
   const mains = order.map((i) => make(map.root.children[i] as MapNode, "main", mainSides[i] as Side, root));
-  root.children = map.root.children.map((_, i) => mains[order.indexOf(i)] as PlacedNode);
+  // `order` is the DOM permutation (left side first). Data order is the inverse, in one pass.
+  root.children = order.reduce<PlacedNode[]>((children, original, placed) => {
+    children[original] = mains[placed] as PlacedNode;
+    return children;
+  }, new Array<PlacedNode>(order.length));
   mains.forEach(
     (main, i) => (main.branchColor = main.node.branchColor ?? (theme.palette[i % theme.palette.length] as string)),
   );
@@ -422,13 +430,21 @@ export function layoutMap(map: MapData, theme: ResolvedTheme, m: TextMeasurer): 
     const { width: w, height: h } = p.content;
     if (down)
       return { width: w + 2 * theme.nodeGapY, height: h, marginTop: 0, padX: theme.nodeGapY, padY: 0, margin: 0 };
-    if (p.kind === "main") return { width: w, height: h, marginTop: 10, padX: 0, padY: 0, margin: 10 };
+    if (p.kind === "main")
+      return {
+        width: w,
+        height: h,
+        marginTop: LAYOUT.mainMargin,
+        padX: 0,
+        padY: 0,
+        margin: LAYOUT.mainMargin,
+      };
     return {
       width: w + 2 * theme.nodeGapX,
-      height: h + 12,
+      height: h + 2 * LAYOUT.subPadY,
       marginTop: theme.nodeGapY,
       padX: theme.nodeGapX,
-      padY: 6,
+      padY: LAYOUT.subPadY,
       margin: 0,
     };
   };
@@ -436,8 +452,8 @@ export function layoutMap(map: MapData, theme: ResolvedTheme, m: TextMeasurer): 
     PlacedNode,
     { w: number; h: number; parentY: number; childrenY: number; childrenW: number; childrenH: number }
   >();
-  const wrapperStrut = normal(CONTAINER_FONT, m);
-  const xHalf = (m.vertical.xHeight * CONTAINER_FONT) / 2;
+  const wrapperStrut = normal(LAYOUT.containerFont, m);
+  const xHalf = (m.vertical.xHeight * LAYOUT.containerFont) / 2;
   for (const p of [...all].reverse()) {
     if (p.kind === "root") continue;
     const ps = parentSize(p);
@@ -520,7 +536,7 @@ export function layoutMap(map: MapData, theme: ResolvedTheme, m: TextMeasurer): 
 
   const pad = theme.mapPadding;
   const rootW = root.content.width;
-  const rootH = root.content.height + 90; // me-root { margin: 45px 0 }
+  const rootH = root.content.height + 2 * LAYOUT.rootMarginY; // me-root { margin: 45px 0 }
   let width: number;
   let height: number;
   if (down) {
@@ -530,7 +546,12 @@ export function layoutMap(map: MapData, theme: ResolvedTheme, m: TextMeasurer): 
     const contentW = Math.max(rootW, rowW);
     width = contentW + pad.left + pad.right;
     height = rootH + rowH + pad.top + pad.bottom;
-    root.topic = { x: pad.left + (contentW - rootW) / 2, y: pad.top + 45, width: rootW, height: root.content.height };
+    root.topic = {
+      x: pad.left + (contentW - rootW) / 2,
+      y: pad.top + LAYOUT.rootMarginY,
+      width: rootW,
+      height: root.content.height,
+    };
     let x = pad.left + (contentW - rowW) / 2;
     for (const p of mains) {
       const s = size.get(p) as { w: number };
@@ -552,7 +573,12 @@ export function layoutMap(map: MapData, theme: ResolvedTheme, m: TextMeasurer): 
     width = lhs.w + rootW + rhs.w + pad.left + pad.right;
     height = contentH + pad.top + pad.bottom;
     const rootX = pad.left + lhs.w;
-    root.topic = { x: rootX, y: pad.top + (contentH - rootH) / 2 + 45, width: rootW, height: root.content.height };
+    root.topic = {
+      x: rootX,
+      y: pad.top + (contentH - rootH) / 2 + LAYOUT.rootMarginY,
+      width: rootW,
+      height: root.content.height,
+    };
     for (const [col, x0] of [
       [lhs, pad.left],
       [rhs, rootX + rootW],

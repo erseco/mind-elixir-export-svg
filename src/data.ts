@@ -62,6 +62,8 @@ export interface MapData {
   /** 0 left, 1 right, 2 both sides, 3 top-down. */
   direction: 0 | 1 | 2 | 3;
   theme: Theme;
+  /** Mind Elixir's compact gaps (`getData().compact`). */
+  compact: boolean;
   nodes: number;
 }
 
@@ -95,10 +97,12 @@ export function readMap(input: unknown, limits: SvgExportLimits, theme?: Theme, 
   let data: unknown = input;
   let instanceTheme: unknown;
   let instanceDirection: unknown;
+  let instanceCompact = false;
   if (isObject(input) && typeof input.getData === "function") {
     data = (input.getData as () => unknown)();
     instanceTheme = input.theme;
     instanceDirection = input.direction;
+    instanceCompact = input.compact === true;
   }
   if (!isObject(data) || !isObject(data.nodeData)) invalid("Expected Mind Elixir data ({ nodeData }) or an instance");
 
@@ -240,21 +244,31 @@ export function readMap(input: unknown, limits: SvgExportLimits, theme?: Theme, 
   const dir = direction ?? (typeof data.direction === "number" ? data.direction : undefined) ?? instanceDirection;
   const pickedTheme =
     theme ?? (isObject(data.theme) ? data.theme : undefined) ?? (isObject(instanceTheme) ? instanceTheme : undefined);
-  const validTheme =
-    isObject(pickedTheme) && Array.isArray(pickedTheme.palette) && isObject(pickedTheme.cssVar)
-      ? {
-          palette: pickedTheme.palette.filter((p): p is string => typeof p === "string"),
-          cssVar: Object.fromEntries(
-            Object.entries(pickedTheme.cssVar).filter((e): e is [string, string] => typeof e[1] === "string"),
-          ),
-        }
-      : THEME;
+  const validTheme = normalizeTheme(pickedTheme);
+  // `getData()` carries `compact`. An instance that omits it still has the flag on itself.
+  const compact = typeof data.compact === "boolean" ? data.compact : instanceCompact;
   return {
     root,
     arrows,
     summaries,
     direction: dir === 0 || dir === 1 || dir === 3 ? dir : 2,
     theme: validTheme,
+    compact,
     nodes: count,
   };
+}
+
+/** Keeps `type`, so a partial dark theme still starts from `DARK_THEME` when it is resolved. */
+function normalizeTheme(picked: unknown): Theme {
+  if (!isObject(picked) || !Array.isArray(picked.palette)) return THEME;
+  const cssSource = isObject(picked.cssVar) ? picked.cssVar : {};
+  const theme: Theme = {
+    palette: picked.palette.filter((p): p is string => typeof p === "string"),
+    cssVar: Object.fromEntries(
+      Object.entries(cssSource).filter((e): e is [string, string] => typeof e[1] === "string"),
+    ),
+  };
+  if (picked.type === "light" || picked.type === "dark") theme.type = picked.type;
+  if (typeof picked.name === "string") theme.name = picked.name;
+  return theme;
 }

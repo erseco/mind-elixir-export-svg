@@ -61,9 +61,10 @@ export async function editorTopics(page: Page): Promise<EditorTopic[]> {
   return page.evaluate(() => {
     const nodes = (window as any).__mind.nodes as HTMLElement;
     const o = nodes.getBoundingClientRect();
-    return [...nodes.querySelectorAll("me-tpc")].map((t) => {
+    return [...nodes.querySelectorAll("me-tpc, .me-tpc")].map((t) => {
       const r = t.getBoundingClientRect();
-      const id = (t as HTMLElement).dataset.nodeid!.slice(2);
+      const el = t as HTMLElement & { nodeObj?: { id?: string } };
+      const id = typeof el.nodeObj?.id === "string" ? el.nodeObj.id : (el.dataset.nodeid ?? "").slice(2);
       return { id, text: t.textContent ?? "", x: r.left - o.left, y: r.top - o.top, width: r.width, height: r.height };
     });
   });

@@ -4,7 +4,7 @@ import { layoutMap } from "../../src/layout.js";
 import { DEFAULT_LIMITS } from "../../src/options.js";
 import { arialMeasurer } from "../../src/text/measure.js";
 import { resolveTheme } from "../../src/theme.js";
-import type { FixtureName } from "../fixtures.js";
+import { MEASURED_FIXTURES, withinTolerance } from "../tolerances.js";
 import { dataOf, editorTopics, openMap } from "./support.js";
 
 /**
@@ -15,16 +15,12 @@ import { dataOf, editorTopics, openMap } from "./support.js";
  * docs/COMPATIBILITY.md.
  */
 
-// Maps whose text is all in Arial, and maps with emoji, CJK and other scripts
-const ARIAL: FixtureName[] = ["single", "three", "topDown", "wide", "deep", "large"];
-const OTHER: FixtureName[] = ["rich", "features", "unicode", "hostile"];
-
-for (const name of [...ARIAL, ...OTHER]) {
+for (const name of MEASURED_FIXTURES) {
   test(`${name}: topics where Mind Elixir draws them`, async ({ page, browserName }) => {
     await openMap(page, name);
     const editor = await editorTopics(page);
     const map = readMap(dataOf(name), DEFAULT_LIMITS);
-    const layout = layoutMap(map, resolveTheme(map.theme), arialMeasurer);
+    const layout = layoutMap(map, resolveTheme(map.theme, map.compact), arialMeasurer);
     const d = { x: 0, y: 0, width: 0, height: 0 };
     for (const e of editor) {
       const t = layout.byId.get(e.id)?.topic;
@@ -36,20 +32,6 @@ for (const name of [...ARIAL, ...OTHER]) {
       type: "deviation",
       description: `${name}: ${JSON.stringify(Object.fromEntries(Object.entries(d).map(([k, v]) => [k, +v.toFixed(2)])))}`,
     });
-    const arial = ARIAL.includes(name);
-    if (browserName === "firefox") {
-      // Horizontal layout is the same; Firefox's taller lines move everything down
-      expect(Math.max(d.x, d.width)).toBeLessThanOrEqual(arial ? 0.3 : 30);
-      // 1.5 px taller per line; topics here have up to two lines
-      expect(d.height).toBeLessThanOrEqual(arial ? 3.5 : 8);
-    } else if (arial) {
-      expect(Math.max(d.x, d.y, d.width, d.height)).toBeLessThanOrEqual(name === "deep" ? 0.3 : 0.1);
-    } else {
-      // Fallback fonts: emoji and CJK lines are taller, their advances estimated. They are the
-      // system's: macOS's (PingFang, Arial Hebrew) are within 10.5 px; Linux's Noto fonts, on CI,
-      // made a CJK caption 27.7 px wider
-      expect(Math.max(d.x, d.width)).toBeLessThanOrEqual(30);
-      expect(Math.max(d.y, d.height)).toBeLessThanOrEqual(15);
-    }
+    expect(withinTolerance(name, browserName, d), JSON.stringify(d)).toBe(true);
   });
 }

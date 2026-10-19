@@ -13,7 +13,10 @@ from the data alone (like Pele: font metrics, no DOM). MIT. Not an official Mind
 - The model follows Mind Elixir 5.15.1's stylesheet and connector code. A change to it needs the
   value from Mind Elixir's source, a unit test, and `npm run compare-layout` before and after;
   update `tests/unit/reference.json` (`scripts/record-reference.mjs`) only when Mind Elixir
-  itself changes.
+  itself changes. Version-sensitive lengths live in `src/profile.ts`.
+  `npm run test:compat -- --mind-elixir-version <version>` compares another release without
+  changing the lockfile. Bump `SUPPORTED_MIND_ELIXIR_VERSION` only after that report is clean and
+  the baselines are re-recorded. A passing subset does not make a version supported.
 - Keep the package free of runtime dependencies and of the DOM (only `downloadSvg` uses it, when
   called). Playwright, Mind Elixir, Pele, modern-screenshot, svg2pdf.js, resvg and the fonts are
   for tests, benchmarks and generating metrics.
