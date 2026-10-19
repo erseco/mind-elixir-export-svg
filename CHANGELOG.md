@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-10-19
+
+- `textDecoration: true` draws a topic's underline, overline and strike-through from
+  `style.textDecoration`, for pages that make Mind Elixir show them. Off by default, because Mind
+  Elixir 5.15.1 does not display them.
+- The eXeLearning guide describes the current integration.
+
 ## 0.2.0 — 2026-10-19
 
 - Layout lengths for Mind Elixir 5.15.1 live in `src/profile.ts`

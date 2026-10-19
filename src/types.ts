@@ -79,6 +79,13 @@ export interface SvgExportOptions {
    * Renderers without `textLength` support, such as svg2pdf.js, ignore it.
    */
   textLength?: boolean;
+  /**
+   * Draw underline, overline and strike-through from a topic's `style.textDecoration`. Default
+   * false, as Mind Elixir 5.15.1 does not display them: the caption is an inline block, which
+   * the decoration of the topic does not reach. Turn it on when the page shows them, for example
+   * with `.map-container me-tpc > .text { text-decoration: inherit }`.
+   */
+  textDecoration?: boolean;
   /** `"preserve"` (default): node links become SVG links (http, https and mailto only). `"text"`: only the 🔗. */
   links?: "preserve" | "text";
   /** Embed images (default true). When false, images are left out with a warning. */

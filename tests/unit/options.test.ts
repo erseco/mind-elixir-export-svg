@@ -29,6 +29,7 @@ describe("resolveOptions", () => {
       measure: arialMeasurer,
       links: "preserve",
       textLength: true,
+      textDecoration: false,
       embedImages: true,
       resolveImage: undefined,
       strict: false,
@@ -53,6 +54,7 @@ describe("resolveOptions", () => {
       measureText,
       links: "text",
       textLength: false,
+      textDecoration: true,
       embedImages: false,
       resolveImage,
       strict: true,
@@ -68,6 +70,7 @@ describe("resolveOptions", () => {
       measure: measureText,
       links: "text",
       textLength: false,
+      textDecoration: true,
       strict: true,
     });
     expect(options.resolveImage).toBe(resolveImage);
