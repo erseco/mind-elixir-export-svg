@@ -7,6 +7,7 @@ export { renderSvg, exportSvg, downloadSvg, toDataUrl } from "./render.js";
 export { createSvgExportPlugin, type MindElixirLike, type WithVectorSvgExport } from "./plugin.js";
 export { SvgExportError, type SvgExportErrorCode } from "./errors.js";
 export { DEFAULT_LIMITS, DEFAULT_FONT_FAMILY } from "./options.js";
+export { SUPPORTED_MIND_ELIXIR_VERSION } from "./profile.js";
 export { THEME, DARK_THEME, type Theme } from "./theme.js";
 export { arialMeasurer, type Font, type TextMeasurer } from "./text/measure.js";
 export type {

@@ -1,15 +1,42 @@
-import { parseColor, type Color } from "./css.js";
+import { parseColor, parsePx, type Color } from "./css.js";
+import { COMPACT_GAPS } from "./profile.js";
 
-/** A Mind Elixir theme: `palette` colours main branches, `cssVar` sets sizes and colours. */
+/**
+ * A Mind Elixir theme. `type` selects the base (`dark` or light) the way `changeTheme` does;
+ * `cssVar` then overrides it. A partial `cssVar` is the normal case in Mind Elixir data.
+ */
 export interface Theme {
   name?: string;
+  type?: "light" | "dark";
   palette: readonly string[];
-  cssVar: Readonly<Record<string, string>>;
+  cssVar?: Readonly<Record<string, string>>;
 }
+
+/** Variables the layout reads. The live-editor helper refuses every other custom property. */
+export const THEME_VARS = [
+  "--node-gap-x",
+  "--node-gap-y",
+  "--main-gap-x",
+  "--main-gap-y",
+  "--root-radius",
+  "--main-radius",
+  "--root-color",
+  "--root-bgcolor",
+  "--root-border-color",
+  "--main-border",
+  "--main-color",
+  "--main-bgcolor",
+  "--main-bgcolor-transparent",
+  "--topic-padding",
+  "--color",
+  "--bgcolor",
+  "--map-padding",
+] as const;
 
 // Mind Elixir 5.15.1's built-in themes (src/const.ts, MIT, (c) 2019 DjZhou)
 export const THEME: Theme = {
   name: "Latte",
+  type: "light",
   palette: [
     "#dd7878",
     "#ea76cb",
@@ -45,6 +72,7 @@ export const THEME: Theme = {
 
 export const DARK_THEME: Theme = {
   name: "Dark",
+  type: "dark",
   palette: [
     "#848FA0",
     "#748BE9",
@@ -93,21 +121,27 @@ export interface ResolvedTheme {
 }
 
 function px(value: string, fallback: number): number {
-  const m = /^\s*(-?[\d.]+)px\s*$/.exec(value);
-  const n = m ? parseFloat(m[1] as string) : Number.NaN;
+  const n = parsePx(value);
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
-/** Reads a theme, falling back to the default theme's value for anything it lacks. */
-export function resolveTheme(theme: Theme): ResolvedTheme {
-  // Every variable read is in the default theme
-  const v = (name: string) => theme.cssVar[name] ?? (THEME.cssVar[name] as string);
+/**
+ * The base `changeTheme` starts from: dark when `type` is `"dark"`, otherwise the light theme.
+ * Missing variables, and a missing or empty palette, come from that base. `compact` then
+ * overwrites the four gaps, as `changeTheme` does after copying `cssVar`.
+ */
+export function resolveTheme(theme: Theme, compact = false): ResolvedTheme {
+  const base = theme.type === "dark" ? DARK_THEME : THEME;
+  const css: Record<string, string> = { ...base.cssVar, ...theme.cssVar };
+  if (compact) Object.assign(css, COMPACT_GAPS);
+  const v = (name: string) => css[name] || "";
   const color = (name: string) => parseColor(v(name));
   const padding = v("--map-padding")
     .trim()
     .split(/\s+/)
+    .filter(Boolean)
     .map((p) => px(p, 0));
-  const [t, r = t, b = t, l = r] = padding as [number, ...number[]];
+  const [t = 0, r = t, b = t, l = r] = padding;
   const border = v("--main-border").trim();
   let mainBorder: ResolvedTheme["mainBorder"] = null;
   if (border) {
@@ -116,7 +150,7 @@ export function resolveTheme(theme: Theme): ResolvedTheme {
     mainBorder = { width: width ? parseFloat(width[1] as string) : 2, color: rest ? parseColor(rest) : null };
   }
   return {
-    palette: theme.palette.length ? [...theme.palette] : [...THEME.palette],
+    palette: theme.palette.length ? [...theme.palette] : [...base.palette],
     nodeGapX: px(v("--node-gap-x"), 30),
     nodeGapY: px(v("--node-gap-y"), 10),
     mainGapX: px(v("--main-gap-x"), 65),

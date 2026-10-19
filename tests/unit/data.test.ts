@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { readMap } from "../../src/data.js";
 import { DEFAULT_LIMITS } from "../../src/options.js";
-import { DARK_THEME, THEME, resolveTheme } from "../../src/theme.js";
+import { SUPPORTED_MIND_ELIXIR_VERSION } from "../../src/profile.js";
+import { DARK_THEME, THEME, THEME_VARS, resolveTheme } from "../../src/theme.js";
 
 const read = (data: unknown, limits = {}) => readMap(data, { ...DEFAULT_LIMITS, ...limits });
 const code = (fn: () => unknown) => {
@@ -94,7 +95,30 @@ describe("readMap", () => {
     expect(read({ nodeData: { topic: "x" }, theme: { palette: "x" }, direction: 9 })).toMatchObject({
       direction: 2,
       theme: THEME,
+      compact: false,
     });
+    expect(
+      read({
+        nodeData: { topic: "x" },
+        compact: true,
+        theme: { name: "Night", type: "dark", palette: ["#111", 2], cssVar: { "--bgcolor": "#010101", bad: 1 } },
+      }),
+    ).toMatchObject({
+      compact: true,
+      theme: { name: "Night", type: "dark", palette: ["#111"], cssVar: { "--bgcolor": "#010101" } },
+    });
+    // A theme without cssVar is still a theme; an unknown type is dropped
+    expect(read({ nodeData: { topic: "x" }, theme: { type: "blue", palette: ["#abc"] } }).theme).toEqual({
+      palette: ["#abc"],
+      cssVar: {},
+    });
+    const compactInstance = { getData: () => ({ nodeData: { topic: "x" } }), compact: true };
+    expect(readMap(compactInstance, DEFAULT_LIMITS).compact).toBe(true);
+    const explicit = {
+      getData: () => ({ nodeData: { topic: "x" }, compact: false }),
+      compact: true,
+    };
+    expect(readMap(explicit, DEFAULT_LIMITS).compact).toBe(false);
   });
 
   it("reads arrows and summaries, dropping what is malformed", () => {
@@ -184,6 +208,8 @@ describe("readMap", () => {
 
 describe("resolveTheme", () => {
   it("parses the default theme", () => {
+    expect(SUPPORTED_MIND_ELIXIR_VERSION).toBe("5.15.1");
+    for (const name of THEME_VARS) expect(THEME.cssVar?.[name]).toEqual(expect.any(String));
     expect(resolveTheme(THEME)).toMatchObject({
       nodeGapX: 30,
       nodeGapY: 10,
@@ -225,5 +251,32 @@ describe("resolveTheme", () => {
       bottom: 3,
       left: 4,
     });
+    // A negative length is not a gap; the light theme's value is used
+    expect(resolveTheme({ palette: ["#000"], cssVar: { "--node-gap-x": "-4px" } }).nodeGapX).toBe(30);
+    expect(resolveTheme({ palette: ["#000"], cssVar: { "--map-padding": "" } }).mapPadding).toEqual({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
+  });
+
+  it("fills a partial dark theme from the dark base, and keeps a transparent background", () => {
+    const dark = resolveTheme({ type: "dark", palette: [], cssVar: { "--root-radius": "8px" } });
+    expect(dark.palette).toEqual([...DARK_THEME.palette]);
+    expect(dark.mainColor).toEqual({ hex: "#ffffff", alpha: 1 });
+    expect(dark.background).toEqual({ hex: "#252526", alpha: 1 });
+    expect(dark.rootBackground).toEqual({ hex: "#2d3748", alpha: 1 });
+    expect(dark.rootRadius).toBe(8);
+    // No type: still the light base, with only the declared override
+    const light = resolveTheme({ palette: ["#123456"], cssVar: { "--bgcolor": "#111111" } });
+    expect(light.palette).toEqual(["#123456"]);
+    expect(light.background).toEqual({ hex: "#111111", alpha: 1 });
+    expect(light.mainColor).toEqual({ hex: "#444446", alpha: 1 });
+    const clear = resolveTheme({ palette: ["#000"], cssVar: { "--bgcolor": "transparent" } });
+    expect(clear.background).toEqual({ hex: "#000000", alpha: 0 });
+    // Compact wins over an explicit gap, matching changeTheme
+    expect(resolveTheme(THEME, true).nodeGapX).toBe(15);
+    expect(resolveTheme({ ...THEME, cssVar: { ...THEME.cssVar, "--node-gap-x": "40px" } }, true).nodeGapX).toBe(15);
   });
 });

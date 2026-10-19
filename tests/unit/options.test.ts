@@ -93,7 +93,12 @@ describe("resolveOptions", () => {
     expect(invalid({ direction: 4 })).toMatch(/direction/);
     expect(invalid({ theme: { palette: "x", cssVar: {} } })).toMatch(/theme/);
     expect(invalid({ theme: { palette: [], cssVar: null } })).toMatch(/theme/);
+    expect(invalid({ theme: { palette: [], cssVar: ["#fff"] } })).toMatch(/theme/);
     expect(invalid({ theme: null })).toMatch(/theme/);
+    expect(resolveOptions({ theme: { type: "dark", palette: ["#111"] } }).theme).toEqual({
+      type: "dark",
+      palette: ["#111"],
+    });
     expect(invalid({ fontFamily: "" })).toMatch(/fontFamily/);
     expect(invalid({ fontFamily: "Arial; } svg { display: none" })).toMatch(/fontFamily/);
     expect(invalid({ fontFamily: "url(x)" })).toMatch(/fontFamily/);

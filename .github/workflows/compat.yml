@@ -1,0 +1,65 @@
+name: Mind Elixir compatibility
+
+# Weekly check of the newest stable Mind Elixir, plus the next prerelease as an advisory.
+# A prerelease failure does not fail this workflow. It does not change the supported baseline.
+on:
+  schedule:
+    - cron: "15 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      mind_elixir_version:
+        description: Version or dist-tag. latest is the newest stable release, not a prerelease tag.
+        default: latest
+        type: string
+      prerelease:
+        description: Also check the next dist-tag. Advisory only.
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  stable:
+    name: Stable Mind Elixir
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Compatibility
+        run: npm run test:compat -- --mind-elixir-version "${VERSION}" --visual
+        env:
+          VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.mind_elixir_version || 'latest' }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mind-elixir-compat-stable
+          path: artifacts/compat/
+
+  prerelease:
+    name: Prerelease Mind Elixir (advisory)
+    if: github.event_name == 'schedule' || inputs.prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Advisory compatibility
+        run: npm run test:compat -- --mind-elixir-version next --advisory
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mind-elixir-compat-prerelease
+          path: artifacts/compat/

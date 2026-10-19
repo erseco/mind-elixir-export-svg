@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Layout lengths for Mind Elixir 5.15.1 live in `src/profile.ts`
+  (`SUPPORTED_MIND_ELIXIR_VERSION`). `npm run test:compat` measures a chosen Mind Elixir version
+  and writes `artifacts/compat/`. A weekly workflow checks the newest stable release; the `next`
+  prerelease is advisory and does not fail the pipeline.
+- Themes follow `changeTheme`: `type: "dark"` fills a partial theme from the dark theme, and
+  `compact` applies the compact gaps. A transparent background stays transparent.
+- The plugin copies allow-listed CSS variables from a live editor when they differ from the
+  declared theme. `renderSvg` still needs no DOM.
+- Main-node children stay in data order. The previous mapping searched the side order once per
+  child.
+
 ## 0.1.1 — 2026-10-18
 
 - `toDataUrl(svg)`: the SVG as a base64 `data:` URL, for an `<img src>`.

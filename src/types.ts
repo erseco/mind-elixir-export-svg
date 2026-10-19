@@ -8,6 +8,8 @@ export interface MindElixirData {
   summaries?: readonly object[] | undefined;
   direction?: number | undefined;
   theme?: Theme | undefined;
+  /** Mind Elixir's compact layout. Omitted means not compact. */
+  compact?: boolean | undefined;
 }
 
 /** What `renderSvg` accepts: Mind Elixir data, or an instance (its `getData()`, theme and direction). */
@@ -55,7 +57,11 @@ export interface SvgExportOptions {
   description?: string;
   /** Prefix of the ids the SVG defines, unique per document. Default `"mindmap-svg"`. */
   idPrefix?: string;
-  /** Mind Elixir theme. Default: the data's or instance's theme, else Mind Elixir's light theme. */
+  /**
+   * Mind Elixir theme. Default: the data's or instance's theme, else Mind Elixir's light theme.
+   * A partial `cssVar` is filled from the light theme, or from the dark theme when `type` is
+   * `"dark"`, as Mind Elixir's `changeTheme` does.
+   */
   theme?: Theme;
   /** 0 left, 1 right, 2 both sides, 3 top-down. Default: the data's or instance's, else 2. */
   direction?: 0 | 1 | 2 | 3;

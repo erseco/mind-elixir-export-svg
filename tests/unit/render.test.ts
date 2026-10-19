@@ -140,6 +140,19 @@ describe("renderSvg", () => {
     expect((await render("three", { background: "#123456" })).svg).toContain('fill="#123456"');
     expect((await render("features", { links: "text" })).svg).not.toContain("<a ");
     expect((await render("three", { direction: 3 })).height).toBeGreaterThan((await render("three")).height);
+    // A transparent theme background is not replaced with the light canvas colour
+    const clear = await renderSvg(
+      { nodeData: { topic: "T" } },
+      { theme: { palette: ["#000"], cssVar: { "--bgcolor": "transparent" } } },
+    );
+    expect(clear.svg).not.toContain("#f6f6f6");
+    // A partial dark theme takes the dark base, not the light one
+    const dark = await renderSvg({ nodeData: { topic: "T" } }, { theme: { type: "dark", palette: ["#010101"] } });
+    expect(dark.svg).toContain('fill="#252526"');
+    expect(dark.svg).toContain('fill="#ffffff"');
+    const roomy = await renderSvg({ nodeData: { topic: "T", children: [{ topic: "C" }] } });
+    const tight = await renderSvg({ nodeData: { topic: "T", children: [{ topic: "C" }] }, compact: true });
+    expect(tight.width).toBeLessThan(roomy.width);
   });
 
   it("lays out with another measurer", async () => {

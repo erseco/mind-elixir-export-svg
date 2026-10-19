@@ -7,6 +7,6 @@ import { resolveTheme } from "../src/theme.js";
 
 export function layout(data: object) {
   const map = readMap(data, DEFAULT_LIMITS);
-  const placed = layoutMap(map, resolveTheme(map.theme), arialMeasurer);
+  const placed = layoutMap(map, resolveTheme(map.theme, map.compact), arialMeasurer);
   return Object.fromEntries([...placed.byId].map(([id, p]) => [id, p.topic]));
 }

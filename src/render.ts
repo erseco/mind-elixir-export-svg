@@ -369,7 +369,7 @@ export async function renderSvg(input: MindElixirInput, options?: SvgExportOptio
     warnings.push({ code, message, nodeId });
   };
   const map = readMap(input, opts.limits, opts.theme, opts.direction);
-  const theme = resolveTheme(map.theme);
+  const theme = resolveTheme(map.theme, map.compact);
   const layout = layoutMap(map, theme, opts.measure);
   const shapes = await draw(map, layout, theme, opts, warn);
   throwIfAborted(opts.signal);

@@ -2,9 +2,8 @@ import type { Color, Radii } from "./css.js";
 import type { Box, Matrix } from "./geometry.js";
 
 /**
- * What the exporter draws, independent of how it was measured. The browser extractor builds a
- * scene from the live map; `renderDocument` turns a scene into SVG without touching the DOM.
- * All coordinates are CSS pixels in the map's layout space (the editor's zoom and pan removed).
+ * What the exporter draws, independent of Mind Elixir. `renderDocument` turns a scene into SVG
+ * without touching the DOM. Coordinates are CSS pixels in the map's layout space.
  */
 
 /** Stacking layers, painted in this order (Mind Elixir's z-index order). */

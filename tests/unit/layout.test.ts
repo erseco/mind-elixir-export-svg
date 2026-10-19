@@ -3,7 +3,7 @@ import { readMap } from "../../src/data.js";
 import { layoutMap, layoutTopic } from "../../src/layout.js";
 import { DEFAULT_LIMITS } from "../../src/options.js";
 import { arialMeasurer } from "../../src/text/measure.js";
-import { THEME, resolveTheme } from "../../src/theme.js";
+import { DARK_THEME, THEME, resolveTheme } from "../../src/theme.js";
 import { FIXTURES, type FixtureName } from "../fixtures.js";
 import reference from "./reference.json" with { type: "json" };
 
@@ -61,6 +61,8 @@ describe("layoutMap", () => {
       expect(m.side === "lhs" ? m.topic.x < layout.root.topic.x : m.topic.x > layout.root.topic.x).toBe(true);
     // Colours follow that order through the palette
     expect(layout.mains.map((m) => m.branchColor)).toEqual(THEME.palette.slice(0, 4));
+    // Children stay in data order; `mains` is the left-then-right DOM order
+    expect(layout.root.children.map((m) => m.node.id)).toEqual(["a", "b", "c", "d"]);
   });
 
   it("lays everything out on one side for left and right maps", () => {
@@ -106,6 +108,18 @@ describe("layoutMap", () => {
     for (let i = 0; i < 900; i++) deep = { topic: "n", children: [deep] };
     const layout = lay({ nodeData: { topic: "R", children: [deep] } }, 1);
     expect(layout.nodes.length).toBe(902);
+  });
+
+  it("uses Mind Elixir's compact gaps, which win over the theme", () => {
+    const data = { nodeData: { topic: "Root", children: [{ topic: "Child" }] } };
+    const placed = (compact: boolean) => {
+      const map = readMap({ ...data, compact }, DEFAULT_LIMITS);
+      return layoutMap(map, resolveTheme(map.theme, map.compact), arialMeasurer);
+    };
+    expect(placed(true).width).toBeLessThan(placed(false).width);
+    const overridden = resolveTheme({ palette: ["#000"], cssVar: { "--node-gap-x": "40px" } }, true);
+    expect(overridden).toMatchObject({ nodeGapX: 15, nodeGapY: 2, mainGapX: 30, mainGapY: 6 });
+    expect(resolveTheme({ type: "dark", palette: [], cssVar: {} }).palette).toEqual([...DARK_THEME.palette]);
   });
 });
 

@@ -13,9 +13,91 @@ Safari 14.1+, Firefox 125+). `downloadSvg` needs a browser.
 ## Mind Elixir
 
 The layout model follows **Mind Elixir 5.15.1** (its stylesheet, `layout.ts`, `linkDiv.ts`,
-`generateBranch.ts`, `arrow.ts`, `summary.ts`). Data from any 5.x version can be rendered; a
-version that changes those files may lay maps out differently from what is drawn here. Mind
-Elixir 6 is in pre-release and has not been compared.
+`generateBranch.ts`, `arrow.ts`, `summary.ts`, `const.ts`, `changeTheme`). That version is
+`SUPPORTED_MIND_ELIXIR_VERSION`. Data from any 5.x version can be rendered; a version that
+changes those files may lay maps out differently from what is drawn here. Mind Elixir 6 is in
+pre-release. A compat report says whether a given release still matches; it does not promote
+that release to supported.
+
+### Checking another version
+
+```sh
+npm run test:compat -- --mind-elixir-version 5.15.1
+npm run test:compat -- --mind-elixir-version latest
+npm run test:compat -- --mind-elixir-version next
+npm run test:compat -- --mind-elixir-version 5.15.1 --visual
+```
+
+`latest` is the newest stable release (a version with no hyphen). npm's `latest` dist-tag may
+point at a prerelease; this command uses the newest stable version instead, and the report says
+so. `next`, `beta` and any other dist-tag are that tag. Any other argument is one npm version.
+
+The command installs that package under `.scratch/compat` and does not change
+`package-lock.json`. It measures the fixtures in `tests/tolerances.ts` (left, right, both sides,
+top-down, deep, wide, large, wrapping, Unicode, tags, images, arrows, summaries, collapsed
+branches, hostile input) in Chromium, Firefox and WebKit. Topics are `me-tpc` or `.me-tpc`. A
+run that finds none fails: an empty measurement is not a match. It also scales the `three` map
+to 0.5 and 1.25, inside Mind Elixir's default scale range, divides the viewport boxes by
+`scaleVal`, and reports movement in that layout space.
+`--visual` runs the Chromium visual spec as well. `--advisory` writes the report and exits 0
+even when a stable version is outside the tolerances.
+
+Reports are `artifacts/compat/<version>.json` and `.md`: the Mind Elixir version, this package's
+version and commit, Node and the browsers, passed and failed cases, the largest deviations, zoom,
+drift against `docs/layout-deviation.json`, and the known limitations below. They are not
+baseline files. `npm run compare-layout` is what writes `docs/layout-deviation.json`, and only
+for the Mind Elixir version in `package.json`.
+
+| Status         | When                                                                                                                                           |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supported`    | The installed version is 5.15.1, geometry is inside the tolerances, and `--visual` did not fail. A visual failure on 5.15.1 is `incompatible`. |
+| `experimental` | A newer release that still fits, or any prerelease (including one that does not fit).                                                          |
+| `incompatible` | A stable release outside the geometry tolerances. The process exits 1 unless `--advisory` was passed.                                          |
+
+A passing subset does not make a version supported. Drift against the recorded macOS baseline is
+listed and does not by itself fail the run: CI uses Linux fonts, and the tolerances already
+cover that.
+
+Checked on 2026-10-19. `latest` resolves to 5.15.1, because npm's `latest` tag is
+`6.0.0-next.4`. `6.0.0-next.11` (`next`) is experimental: 28 of 30 geometry cases passed.
+Chromium and WebKit place the top-down fixture 20 px lower (y 20, recorded 0). Firefox shows
+that same 20 px on top of its line-height drift (y 22.33, recorded 2.33); Firefox `y` is not a
+failure. Side layouts on that prerelease still match. The supported baseline stays 5.15.1.
+
+GitHub Actions (`.github/workflows/compat.yml`) runs the stable check every Monday at 06:15 UTC
+and on `workflow_dispatch` (`mind_elixir_version`, default `latest`). The `next` prerelease is a
+separate advisory job. Reports are uploaded as artifacts. The workflow has `contents: read`.
+
+### Adapting the renderer
+
+When a report shows a real layout change:
+
+1. Read the failing fixture and browser in the report.
+2. Diff that Mind Elixir's `src/index.css`, `generateBranch.ts`, `arrow.ts`, `summary.ts`,
+   `const.ts` and `changeTheme` against 5.15.1. The copies in this repo are named in
+   `src/profile.ts`.
+3. Change the matching length, the theme merge, or the connector formula. Add a unit test.
+4. Run `npm run compare-layout` and `npm run test:e2e` against the version you intend to support.
+5. Re-record `tests/unit/reference.json` and `docs/layout-deviation.json` only then, and record
+   the new measurements in this file before changing a tolerance.
+6. Set `SUPPORTED_MIND_ELIXIR_VERSION` only after a clean compat report for that version.
+
+### Known limitations
+
+These are bounded in `tests/tolerances.ts` and listed in every compat report. They are not new
+regressions:
+
+- Firefox's `line-height: normal` for 16 px Arial is 19.5 px; Chromium and WebKit use 18. The
+  vertical drift is recorded. Widths still have to match. Firefox `y` is not a failure.
+- Emoji, CJK, Hebrew and Arabic use estimated widths (emoji 1.2 em, CJK 1 em, Hangul 0.865 em,
+  Arabic 0.32 em, anything else 0.556 em). Chromium and WebKit allow 30 px horizontally and 15 px
+  vertically on those fixtures.
+- Captions are measured left to right. This renderer does not shape Arabic or Hebrew. Setting
+  SVG `direction="rtl"` without moving `x` would place the text in the wrong box.
+- `svg2pdf.js` ignores `textLength`. jsPDF's standard fonts cover Latin-1.
+- Compact gaps follow `data.compact`, or an instance's `compact` when the data omits it.
+- A stylesheet override on a live editor is applied only by the plugin.
+- An intentionally transparent background stays transparent.
 
 ## Layout against Mind Elixir
 
