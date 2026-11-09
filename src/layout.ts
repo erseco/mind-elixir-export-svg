@@ -425,10 +425,12 @@ export function layoutMap(map: MapData, theme: ResolvedTheme, m: TextMeasurer): 
   }
 
   // Sizes, children first. me-parent around the topic: main nodes have margin 10px, others
-  // padding 6px gap-x and margin-top gap-y (top-down: padding 0 gap-y, no margin)
+  // padding 6px gap-x and margin-top gap-y (top-down: padding 0 gap-y, no margin, except main
+  // nodes: since Mind Elixir 6 `.me-main > .me-wrapper > .me-parent` ties with `.me-nodes.down
+  // .me-parent` in specificity and comes later, so they keep margin 10px and no padding)
   const parentSize = (p: PlacedNode) => {
     const { width: w, height: h } = p.content;
-    if (down)
+    if (down && p.kind !== "main")
       return { width: w + 2 * theme.nodeGapY, height: h, marginTop: 0, padX: theme.nodeGapY, padY: 0, margin: 0 };
     if (p.kind === "main")
       return {
