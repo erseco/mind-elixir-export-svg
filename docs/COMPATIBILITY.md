@@ -1,7 +1,8 @@
 # Compatibility
 
-Measured on 2026-10-18 on macOS 26.4 (Apple Silicon), Node 26.12, Playwright 1.64.1, Mind Elixir
-5.15.1. `npm run compare-layout`, `npm run test:e2e` and `npm run bench` reproduce it.
+Measured on macOS 26.4 (Apple Silicon), Node 26.12: the layout table on 2026-11-09 with Playwright
+1.65.0 and Mind Elixir 6.0.0, the rest on 2026-10-18 with Playwright 1.64.1 and Mind Elixir 5.15.1.
+`npm run compare-layout`, `npm run test:e2e` and `npm run bench` reproduce it.
 
 ## Runtimes
 
@@ -12,20 +13,22 @@ Safari 14.1+, Firefox 125+). `downloadSvg` needs a browser.
 
 ## Mind Elixir
 
-The layout model follows **Mind Elixir 5.15.1** (its stylesheet, `layout.ts`, `linkDiv.ts`,
+The layout model follows **Mind Elixir 6.0.0** (its stylesheet, `layout.ts`, `linkDiv.ts`,
 `generateBranch.ts`, `arrow.ts`, `summary.ts`, `const.ts`, `changeTheme`). That version is
-`SUPPORTED_MIND_ELIXIR_VERSION`. Data from any 5.x version can be rendered; a version that
-changes those files may lay maps out differently from what is drawn here. Mind Elixir 6 is in
-pre-release. A compat report says whether a given release still matches; it does not promote
+`SUPPORTED_MIND_ELIXIR_VERSION`. Data from 5.x and 6.x can be rendered; a version that changes
+those files may lay maps out differently from what is drawn here. The only layout difference
+between 5.15.1 and 6.0.0 is top-down: 6.0.0 keeps the 10 px margin on main nodes (see the
+changelog), so top-down maps drawn by 5.x sit 10 px (main nodes) and 20 px (their children)
+higher than this package places them. A compat report says whether a given release still matches; it does not promote
 that release to supported.
 
 ### Checking another version
 
 ```sh
-npm run test:compat -- --mind-elixir-version 5.15.1
+npm run test:compat -- --mind-elixir-version 6.0.0
 npm run test:compat -- --mind-elixir-version latest
 npm run test:compat -- --mind-elixir-version next
-npm run test:compat -- --mind-elixir-version 5.15.1 --visual
+npm run test:compat -- --mind-elixir-version 6.0.0 --visual
 ```
 
 `latest` is the newest stable release (a version with no hyphen). npm's `latest` dist-tag may
@@ -48,21 +51,18 @@ drift against `docs/layout-deviation.json`, and the known limitations below. The
 baseline files. `npm run compare-layout` is what writes `docs/layout-deviation.json`, and only
 for the Mind Elixir version in `package.json`.
 
-| Status         | When                                                                                                                                           |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supported`    | The installed version is 5.15.1, geometry is inside the tolerances, and `--visual` did not fail. A visual failure on 5.15.1 is `incompatible`. |
-| `experimental` | A newer release that still fits, or any prerelease (including one that does not fit).                                                          |
-| `incompatible` | A stable release outside the geometry tolerances. The process exits 1 unless `--advisory` was passed.                                          |
+| Status         | When                                                                                                                                         |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supported`    | The installed version is 6.0.0, geometry is inside the tolerances, and `--visual` did not fail. A visual failure on 6.0.0 is `incompatible`. |
+| `experimental` | A newer release that still fits, or any prerelease (including one that does not fit).                                                        |
+| `incompatible` | A stable release outside the geometry tolerances. The process exits 1 unless `--advisory` was passed.                                        |
 
 A passing subset does not make a version supported. Drift against the recorded macOS baseline is
 listed and does not by itself fail the run: CI uses Linux fonts, and the tolerances already
 cover that.
 
-Checked on 2026-10-19. `latest` resolves to 5.15.1, because npm's `latest` tag is
-`6.0.0-next.4`. `6.0.0-next.11` (`next`) is experimental: 28 of 30 geometry cases passed.
-Chromium and WebKit place the top-down fixture 20 px lower (y 20, recorded 0). Firefox shows
-that same 20 px on top of its line-height drift (y 22.33, recorded 2.33); Firefox `y` is not a
-failure. Side layouts on that prerelease still match. The supported baseline stays 5.15.1.
+Checked on 2026-11-09. `latest` resolves to 6.0.0: 30 of 30 geometry cases passed, and the
+visual spec passed. 6.0.0 is the supported baseline.
 
 GitHub Actions (`.github/workflows/compat.yml`) runs the stable check every Monday at 06:15 UTC
 and on `workflow_dispatch` (`mind_elixir_version`, default `latest`). The `next` prerelease is a
@@ -74,7 +74,7 @@ When a report shows a real layout change:
 
 1. Read the failing fixture and browser in the report.
 2. Diff that Mind Elixir's `src/index.css`, `generateBranch.ts`, `arrow.ts`, `summary.ts`,
-   `const.ts` and `changeTheme` against 5.15.1. The copies in this repo are named in
+   `const.ts` and `changeTheme` against 6.0.0. The copies in this repo are named in
    `src/profile.ts`.
 3. Change the matching length, the theme merge, or the connector formula. Add a unit test.
 4. Run `npm run compare-layout` and `npm run test:e2e` against the version you intend to support.
@@ -113,7 +113,7 @@ Every topic of the test maps, laid out from the data, against where Mind Elixir 
 | deep (27 levels)                        | 0.27 / 0 / 0.02 / 0        | the same                  | 0.06 / 0.35 / 0.01 / 1.52   |
 | large (311)                             | 0.02 / 0 / 0.02 / 0        | the same                  | 0.07 / 210.82 / 0.04 / 1.52 |
 | rich (13: accents, emoji, CJK)          | 4.52 / 4 / 4.5 / 8         | 4.73 / 4.22 / 4.72 / 8    | 3.63 / 11.82 / 3.59 / 6     |
-| features (6: link, icons, tags, image)  | 6.02 / 1.06 / 6.02 / 2.11  | 3.02 / 0.87 / 3.02 / 1.75 | 1.38 / 2.27 / 1.36 / 1.52   |
+| features (6: link, icons, tags, image)  | 6.02 / 0.06 / 6.02 / 0.11  | 3.02 / 0.13 / 3.02 / 0.25 | 1.38 / 2.27 / 1.36 / 2.86   |
 | unicode (8: CJK, Hebrew, Arabic, emoji) | 0.03 / 14 / 10.47 / 8      | 0.03 / 14 / 10.47 / 8     | 0 / 14.07 / 10.43 / 5       |
 
 Why the differences:

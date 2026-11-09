@@ -77,7 +77,7 @@ for (const name of ["three", "rich", "large"]) {
       const legacy = await time(async () => await mind.exportSvg().text());
       const pngBytes = atob(png.value.split(",")[1]).length;
       return {
-        nodes: mind.nodes.querySelectorAll("me-tpc").length,
+        nodes: mind.nodes.querySelectorAll("me-tpc, .me-tpc").length,
         png: { bytes: pngBytes, ms: png.ms },
         legacy: { text: legacy.value, ms: legacy.ms },
         data: mind.getData(),

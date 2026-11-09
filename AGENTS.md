@@ -10,7 +10,7 @@ from the data alone (like Pele: font metrics, no DOM). MIT. Not an official Mind
   live DOM, measure with a canvas, or add a second code path for browsers. Never use
   `foreignObject`, screenshots, rasterized text, `<style>`, scripts or remote resources in the
   output.
-- The model follows Mind Elixir 5.15.1's stylesheet and connector code. A change to it needs the
+- The model follows Mind Elixir 6.0.0's stylesheet and connector code. A change to it needs the
   value from Mind Elixir's source, a unit test, and `npm run compare-layout` before and after;
   update `tests/unit/reference.json` (`scripts/record-reference.mjs`) only when Mind Elixir
   itself changes. Version-sensitive lengths live in `src/profile.ts`.

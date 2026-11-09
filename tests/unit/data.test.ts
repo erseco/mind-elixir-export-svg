@@ -208,7 +208,7 @@ describe("readMap", () => {
 
 describe("resolveTheme", () => {
   it("parses the default theme", () => {
-    expect(SUPPORTED_MIND_ELIXIR_VERSION).toBe("5.15.1");
+    expect(SUPPORTED_MIND_ELIXIR_VERSION).toBe("6.0.0");
     for (const name of THEME_VARS) expect(THEME.cssVar?.[name]).toEqual(expect.any(String));
     expect(resolveTheme(THEME)).toMatchObject({
       nodeGapX: 30,

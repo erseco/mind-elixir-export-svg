@@ -1,6 +1,6 @@
 /**
  * How far a topic may sit from Mind Elixir before a layout comparison fails.
- * The numbers are the measured bounds in docs/COMPATIBILITY.md (2026-10-18, Mind Elixir 5.15.1).
+ * The numbers are the measured bounds in docs/COMPATIBILITY.md (2026-11-09, Mind Elixir 6.0.0).
  * Firefox's vertical drift and the fallback-font estimates are known limitations: they are
  * bounded here, and a compatibility report lists them instead of calling them regressions.
  */

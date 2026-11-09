@@ -4,7 +4,7 @@
  * The SVG writer (`src/svg`), validation (`src/data.ts`, `src/security.ts`) and the font tables
  * (`src/text`) do not follow a Mind Elixir version. Geometry does. Mind Elixir publishes no
  * geometry API: `layoutSSR` only assigns sides and emits HTML, so the lengths below are copied
- * from 5.15.1's stylesheet. The other copies are named here so a later release is a short list:
+ * from 6.0.0's stylesheet. The other copies are named here so a later release is a short list:
  *
  * - this file — lengths from `src/index.css`, and the compact gaps from `changeTheme`
  * - `src/theme.ts` — built-in themes and `changeTheme`'s merge (`type`, then `cssVar`, then compact)
@@ -18,10 +18,10 @@
  */
 
 /** The Mind Elixir release this layout was measured against. */
-export const SUPPORTED_MIND_ELIXIR_VERSION = "5.15.1";
+export const SUPPORTED_MIND_ELIXIR_VERSION = "6.0.0";
 
 /**
- * Lengths from Mind Elixir 5.15.1 `src/index.css`. Pixels, except `maxWidthEm`, `linkMarginEm`
+ * Lengths from Mind Elixir 6.0.0 `src/index.css`. Pixels, except `maxWidthEm`, `linkMarginEm`
  * and the two line heights, which are ems of the topic's font.
  */
 export const LAYOUT = Object.freeze({
@@ -51,9 +51,9 @@ export const LAYOUT = Object.freeze({
   tagMarginTop: 2,
   tagMarginRight: 4,
   mainMargin: 10,
-  /** `me-parent` padding-top and padding-bottom for a sub node (not top-down). */
+  /** `.me-parent` padding-top and padding-bottom for a sub node (not top-down). */
   subPadY: 6,
-  /** `me-root` margin-top and margin-bottom. */
+  /** `.me-root` margin-top and margin-bottom. */
   rootMarginY: 45,
 });
 
