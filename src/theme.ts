@@ -33,7 +33,7 @@ export const THEME_VARS = [
   "--map-padding",
 ] as const;
 
-// Mind Elixir 5.15.1's built-in themes (src/const.ts, MIT, (c) 2019 DjZhou)
+// Mind Elixir 6.0.0's built-in themes (unchanged since 5.15.1) (src/const.ts, MIT, (c) 2019 DjZhou)
 export const THEME: Theme = {
   name: "Latte",
   type: "light",

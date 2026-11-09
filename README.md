@@ -13,7 +13,7 @@ const { svg, width, height, warnings } = await renderSvg(mind.getData());
 ```
 
 - **Mind Elixir's layout, computed.** Topic sizes, line breaks, gaps, branch curves, arrows and
-  summary brackets follow Mind Elixir 5.15.1's stylesheet and connector code, with Arial's
+  summary brackets follow Mind Elixir 6.0.0's stylesheet and connector code, with Arial's
   advance widths and kerning. For text in Arial the result is where Mind Elixir draws it in
   Chromium and WebKit, to a few hundredths of a pixel (measured below).
 - **Native SVG only.** Rects, paths, `<text>`/`<tspan>` and, for pictures in the map, `<image>`.
@@ -28,7 +28,7 @@ const { svg, width, height, warnings } = await renderSvg(mind.getData());
 The same map in Mind Elixir and as the SVG this package makes from its data
 (`npm run screenshots` regenerates them):
 
-| Mind Elixir 5.15.1 (Chromium screenshot)                    | `renderSvg(mind)`                             |
+| Mind Elixir 6.0.0 (Chromium screenshot)                     | `renderSvg(mind)`                             |
 | ----------------------------------------------------------- | --------------------------------------------- |
 | ![The map in the editor](docs/images/both-sides-editor.png) | ![The map as SVG](docs/images/both-sides.svg) |
 
@@ -66,7 +66,7 @@ npm install @erseco/mind-elixir-export-svg
 ```
 
 It has no dependencies. It reads Mind Elixir data structurally, so it needs no Mind Elixir
-package at runtime. The layout follows Mind Elixir 5.15.1
+package at runtime. The layout follows Mind Elixir 6.0.0
 (`SUPPORTED_MIND_ELIXIR_VERSION`).
 
 ## Use
@@ -154,12 +154,12 @@ Not drawn, with a warning: the content of custom HTML nodes (`dangerouslySetInne
 colours CSS can express but this cannot (gradients, `var()`).
 
 Underline, overline and strike-through from a topic's `style.textDecoration` are drawn only with
-`textDecoration: true`. Mind Elixir 5.15.1 does not display them (they do not reach the caption,
+`textDecoration: true`. Mind Elixir does not display them (they do not reach the caption,
 which is an inline block), so the default matches the editor. Turn the option on when the page
 shows them, for example with:
 
 ```css
-.map-container me-tpc > .text {
+.map-container .me-tpc > .text {
   text-decoration: inherit;
 }
 ```
@@ -210,7 +210,7 @@ npm run check           # format, types, unit tests (100% coverage), build
 npm run test:e2e        # against real Mind Elixir in Chromium, Firefox and WebKit
 npm run test:package    # pack, install in an empty project, render from it in Node
 npm run compare-layout  # docs/layout-deviation.json, for the pinned Mind Elixir
-npm run test:compat -- --mind-elixir-version 5.15.1   # or latest, or next
+npm run test:compat -- --mind-elixir-version 6.0.0    # or latest, or next
 npm run bench           # docs/benchmarks.json
 npm run demo            # http://127.0.0.1:5173: the editor next to its export
 ```

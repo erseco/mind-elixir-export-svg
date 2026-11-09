@@ -14,7 +14,7 @@ const lay = (data: object, direction?: number) => {
 };
 
 describe("layoutMap against Mind Elixir in Chromium", () => {
-  // tests/unit/reference.json: what Mind Elixir 5.15.1 draws in Chromium with Arial
+  // tests/unit/reference.json: what Mind Elixir 6.0.0 draws in Chromium with Arial
   // (scripts/record-reference.mjs). Text in Arial, so the layout should match it closely.
   // Recorded values have two decimals. Chromium rounds each text's width to 1/64 px its own way
   // (about 0.01 px per topic here), which adds up along the 27 levels of `deep`

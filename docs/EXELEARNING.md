@@ -27,7 +27,7 @@ async function save() {
 
 ```css
 /* Mind Elixir does not show a topic's text-decoration on its caption; this rule does */
-.map-container me-tpc > .text {
+.map-container .me-tpc > .text {
   text-decoration: inherit;
 }
 ```

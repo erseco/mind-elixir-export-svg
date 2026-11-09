@@ -47,9 +47,9 @@
       "features": {
         "topics": 6,
         "x": 6.02,
-        "y": 1.06,
+        "y": 0.06,
         "width": 6.02,
-        "height": 2.11
+        "height": 0.11
       },
       "unicode": {
         "topics": 8,
@@ -110,7 +110,7 @@
         "x": 1.38,
         "y": 2.27,
         "width": 1.36,
-        "height": 1.52
+        "height": 2.86
       },
       "unicode": {
         "topics": 8,
@@ -169,9 +169,9 @@
       "features": {
         "topics": 6,
         "x": 3.02,
-        "y": 0.87,
+        "y": 0.13,
         "width": 3.02,
-        "height": 1.75
+        "height": 0.25
       },
       "unicode": {
         "topics": 8,

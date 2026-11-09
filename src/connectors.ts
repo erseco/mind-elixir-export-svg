@@ -1,7 +1,7 @@
 import type { Box } from "./geometry.js";
 
 /**
- * Connector geometry, adapted from Mind Elixir 5.15.1 (src/utils/generateBranch.ts,
+ * Connector geometry, adapted from Mind Elixir 6.0.0 (src/utils/generateBranch.ts,
  * src/arrow.ts, src/summary.ts; MIT, (c) 2019 DjZhou), so lines, arrows and brackets have the
  * shapes the editor draws for the same boxes.
  */

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-11-09
+
+- The layout follows Mind Elixir 6.0.0 (`SUPPORTED_MIND_ELIXIR_VERSION`). In 6.0.0 the map
+  elements are `<div>`s with classes, so `.me-main > .me-wrapper > .me-parent` ties with
+  `.me-nodes.down .me-parent` and wins by order: in top-down maps main nodes keep their 10 px
+  margin and lose the side padding. Top-down main nodes now sit 10 px lower and their children
+  20 px lower than in 0.2.x, as Mind Elixir 6 draws them. Side layouts and themes are unchanged.
+- CSS examples use class selectors (`.map-container .me-tpc > .text`), which Mind Elixir 6 needs.
+
 ## 0.2.1 — 2026-10-19
 
 - `textDecoration: true` draws a topic's underline, overline and strike-through from

@@ -51,11 +51,11 @@ Another font: pass `measureText` (`width(text, font)` and `vertical`).
 
 ## The layout model
 
-`src/layout.ts` reproduces Mind Elixir 5.15.1's `index.css` for its DOM
-(`me-nodes > me-main / me-root > me-wrapper > me-parent > me-tpc`, `me-children`). The pixel
+`src/layout.ts` reproduces Mind Elixir 6.0.0's `index.css` for its DOM
+(`.me-nodes > .me-main / .me-root > .me-wrapper > .me-parent > .me-tpc`, `.me-children`). The pixel
 lengths are `LAYOUT` in `src/profile.ts`:
 
-- **Topics** (`me-tpc`, border-box, `max-width: 35em`, `white-space: pre-wrap`). Root: 25 px,
+- **Topics** (`.me-tpc`, border-box, `max-width: 35em`, `white-space: pre-wrap`). Root: 25 px,
   padding 10/30, 2 px border; main: padding 8/25, 2 px border in the branch colour; sub: padding
   `--topic-padding`; top-down subs: padding 6/12, 1 px border. Contents in order: the image
   (block, `margin-bottom: 8px`), a line of inline boxes (the caption's `span.text` inline block,

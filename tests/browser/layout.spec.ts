@@ -8,7 +8,7 @@ import { MEASURED_FIXTURES, withinTolerance } from "../tolerances.js";
 import { dataOf, editorTopics, openMap } from "./support.js";
 
 /**
- * Where the renderer puts each topic, from the data alone, against where Mind Elixir 5.15.1
+ * Where the renderer puts each topic, from the data alone, against where Mind Elixir 6.0.0
  * draws it in each browser (Arial). Text in Arial is reproduced exactly in Chromium and WebKit;
  * Firefox sets `line-height: normal` taller (19.5 px for 16 px Arial, not 18), and emoji or CJK
  * use the system's fallback fonts, so those are bounded, not exact. Measured values are in
